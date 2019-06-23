@@ -1,21 +1,24 @@
-import { cloneDeep, pull } from 'lodash'
-import { Assemblage, BaseComponent, ECSEntity } from './interfaces'
+import { cloneDeep, pull } from 'lodash-es'
+import { Assemblage, BaseComponent, Entity } from './interfaces'
 import { System } from './system'
 import { arrayContainsArray } from './utils'
 
 const log = require('debug')('ECS-Machina')
 
-export class ECS {
+export class World {
 
-  // TODO: set private?
-  public static entities: {
-    [entity: string]: BaseComponent[]
+  private entities: {
+    [entity in Entity]: BaseComponent[] // Why not [entity: Entity] ? https://github.com/microsoft/TypeScript/issues/1778#issuecomment-479986964
   } = {}
+
+  private systems: System[] = []
+
+  private counter = 0
 
   /**
    * Creates an entity (a unique id) and adds it to the ECS database
    */
-  public static createEntity(): ECSEntity {
+  public createEntity(): Entity {
     const entity = (++this.counter).toString()
     this.addEntity(entity)
     return entity
@@ -24,7 +27,7 @@ export class ECS {
   /**
    * Destroys an entity and its components from the ECS database
    */
-  public static destroyEntity(entity: ECSEntity): void {
+  public destroyEntity(entity: Entity): void {
     // Remove entity references from ECS
     delete this.entities[entity]
 
@@ -38,7 +41,7 @@ export class ECS {
    * Manually adds an entity to the ECS database.
    * If the entity is already in the database, it is ignored.
    */
-  public static addEntity(entity: ECSEntity): void {
+  public addEntity(entity: Entity): void {
     if (this.entities[entity]) {
       console.error(`The entity ${entity} has already been added`)
     }
@@ -52,7 +55,7 @@ export class ECS {
    * been added, the properties of the new one will overwrite the original's.
    * The method makes a deep copy of the original component before adding it, and returns this copy.
    */
-  public static addComponent(entity: ECSEntity, component: BaseComponent): BaseComponent {
+  public addComponent(entity: Entity, component: BaseComponent): BaseComponent {
     // Create the entity if it doesn't exist yet
     if (!this.entities[entity]) {
       this.entities[entity] = []
@@ -72,7 +75,7 @@ export class ECS {
     this.entities[entity].push(component)
 
     // Link entity to system if requiredComponents match
-    for (const system of ECS.systems) {
+    for (const system of this.systems) {
       if (arrayContainsArray(this.entities[entity].map(o => o._type), system.requiredComponents)) {
         system.addEntity(entity, this.entities[entity])
       }
@@ -87,7 +90,7 @@ export class ECS {
    * @param entity
    * @param component
    */
-  public static removeComponent(entity: ECSEntity, component: BaseComponent): void {
+  public removeComponent(entity: Entity, component: BaseComponent): void {
     // Remove component from entityComponents
     pull(this.entities[entity], component)
 
@@ -105,14 +108,14 @@ export class ECS {
   /**
    * Returns the array of entities
    */
-  public static getEntities(): ECSEntity[] {
+  public getEntities(): Entity[] {
     return Object.keys(this.entities)
   }
 
   /**
    * Returns an array of entities that own the required components
    */
-  public static findEntities(componentTypes: string[]): ECSEntity[] {
+  public findEntities(componentTypes: string[]): Entity[] {
     const result = []
     for (const [entity, components] of Object.entries(this.entities)) {
       const entityCmpTypes = components.map(o => o._type)
@@ -126,7 +129,7 @@ export class ECS {
   /**
    * Returns the components for a given entity
    */
-  public static getComponents(entity: ECSEntity): Assemblage {
+  public getComponents(entity: Entity): Assemblage {
     return this.entities[entity]
   }
 
@@ -134,7 +137,7 @@ export class ECS {
    * Registers a system instance in the ECS database.
    * You can only register one (1) instance of each System's subclass
    */
-  public static addSystem(system: System): void {
+  public addSystem(system: System): void {
     for (const sys of this.systems) {
       if (sys.constructor.name === system.constructor.name) {
         console.error(`There is already a registered instance of ${system.constructor.name}`)
@@ -145,20 +148,20 @@ export class ECS {
     log(`Registered System ${system.constructor.name}`)
 
     // Add all concerned entities to this system
-    system.refreshEntities()
+    system.refreshEntities(this.entities)
   }
 
   /**
    * Removed a system from the ECS database
    */
-  public static removeSystem(system: System): void {
+  public removeSystem(system: System): void {
     pull(this.systems, system)
   }
 
   /**
    * Returns the systems' list
    */
-  public static getSystems(): System[] {
+  public getSystems(): System[] {
     return this.systems
   }
 
@@ -167,11 +170,7 @@ export class ECS {
    *
    * @param systemClass
    */
-  public static getSystem<T extends System>(systemClass: typeof System): T {
+  public getSystem<T extends System>(systemClass: typeof System): T {
     return this.getSystems().find(o => o instanceof systemClass) as T
   }
-
-  private static systems: System[] = []
-
-  private static counter = 0
 }

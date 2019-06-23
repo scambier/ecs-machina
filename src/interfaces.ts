@@ -1,19 +1,22 @@
 /**
- * The interface for all components.
- * It forces a `_type` attribute for typeguarding
+ * The interface for all components.<br/>
+ * It requires a `_type` attribute for typeguarding
  */
 export interface BaseComponent {
   /**
    * Type guard attribute.<br/>
-   * This value <i>must</i> be set to a unique string for each IComponent sub-type
+   * This value <i>must</i> be set to a unique string for each IComponent sub-type (hint: use a Symbol)
    */
   _type: string
 }
 
-export type ECSEntity = string
+/**
+ * A simple alias to quickly find Entity uses with your IDE
+ */
+export type Entity = string
 
 export type EntityComponent<T extends BaseComponent = BaseComponent> = {
-  entity: ECSEntity,
+  entity: Entity,
   components: T[]
 }
 

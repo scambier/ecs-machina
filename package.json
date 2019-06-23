@@ -4,6 +4,9 @@
   "description": "A TypeScript Entity-Component-System Engine",
   "main": "index.js",
   "scripts": {
+    "start": "tsc --watch",
+    "build": "tsc && npm run build:docs",
+    "build:docs": "typedoc --options ./typedoc.config.js ./src",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

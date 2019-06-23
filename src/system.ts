@@ -1,6 +1,6 @@
-import { ECS } from './ECS'
-import { BaseComponent, ECSEntity, EntityComponent } from './interfaces'
+import { BaseComponent, Entity, EntityComponent } from './interfaces'
 import { arrayContainsArray } from './utils'
+import { World } from './world'
 
 /**
  * The base abstract class for all Systems
@@ -29,7 +29,7 @@ export abstract class System {
   /**
    *  Returns the list of entities for this system
    */
-  public getEntities(): ECSEntity[] {
+  public getEntities(): Entity[] {
     return Object.keys(this.entityComponents)
   }
 
@@ -43,9 +43,9 @@ export abstract class System {
   /**
    * Rebuilds the entities hash
    */
-  public refreshEntities(): void {
+  public refreshEntities(entities: { [entity in Entity]: BaseComponent[] }): void {
     this.entityComponents = {}
-    for (const [entity, components] of Object.entries(ECS.entities)) {
+    for (const [entity, components] of Object.entries(entities)) {
       if (arrayContainsArray(components.map(o => o._type), this.requiredComponents)) {
         this.entityComponents[entity] = components
       }
@@ -58,7 +58,7 @@ export abstract class System {
    * @param entity
    * @param components
    */
-  public addEntity(entity: ECSEntity, components: BaseComponent[]): void {
+  public addEntity(entity: Entity, components: BaseComponent[]): void {
     this.entityComponents[entity] = components
     this.addedEntity(entity)
   }
@@ -68,14 +68,14 @@ export abstract class System {
    *
    * @param entity
    */
-  public deleteEntity(entity: ECSEntity): void {
+  public deleteEntity(entity: Entity): void {
     delete this.entityComponents[entity]
   }
 
   /**
    * Does the entity exists with the system
    */
-  public hasEntity(entity: ECSEntity): boolean {
+  public hasEntity(entity: Entity): boolean {
     return !!this.entityComponents[entity]
   }
 
@@ -95,14 +95,14 @@ export abstract class System {
     this.afterDraw()
   }
 
-  //#region Hooks
+  //#region Callbacks
 
   /**
    * Called each time an entity is added
    *
    * @param entity
    */
-  public addedEntity(entity: ECSEntity): void { }
+  public addedEntity(entity: Entity): void { }
 
   /**
    * Called before the entities update loop
@@ -139,6 +139,6 @@ export abstract class System {
    */
   public afterDraw(): void { }
 
-  //#endregion Hooks
+  //#endregion Callbacks
 
 }
