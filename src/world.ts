@@ -7,14 +7,14 @@ const log = require('debug')('ECS-Machina')
 
 export class World {
 
-  // TODO: make private with getter
+  // TODO: make protected with getter
   public entities: {
     [entity in Entity]: BaseComponent[] // Why not [entity: Entity] ? https://github.com/microsoft/TypeScript/issues/1778#issuecomment-479986964
   } = {}
 
-  private systems: System[] = []
+  protected systems: System[] = []
 
-  private counter = 0
+  protected entityId = 0
 
   public update(): void {
     for (const system of this.getSystems()) {
@@ -30,7 +30,7 @@ export class World {
    * Creates an entity (a unique id) and adds it to the ECS database
    */
   public createEntity(): Entity {
-    const entity = (++this.counter).toString()
+    const entity = (++this.entityId).toString()
     this.addEntity(entity)
     return entity
   }
