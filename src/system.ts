@@ -15,7 +15,7 @@ export abstract class System {
   /**
    * Hash of { entity: component[] }
    */
-  private entityComponents: { [entity: string]: BaseComponent[] } = {}
+  protected entityComponents: { [entity: string]: BaseComponent[] } = {}
 
   /**
    * Returns the components array of an entity
@@ -78,22 +78,6 @@ export abstract class System {
     return !!this.entityComponents[entity]
   }
 
-  /**
-   * Calls the [[System.drawEntity]] method
-   *
-   * @param layerName
-   * @private
-   */
-  public _draw(layerName?: string): void {
-    this.beforeDraw()
-
-    for (const [entity, components] of Object.entries(this.entityComponents)) {
-      this.drawEntity({ entity, components }, layerName)
-    }
-
-    this.afterDraw()
-  }
-
   //#region Callbacks
 
   /**
@@ -121,6 +105,21 @@ export abstract class System {
   public afterUpdate(): void { }
 
   /**
+   * Calls [[System.beforeDraw]], then [[System.drawEntity]], then [[System.afterDraw]]
+   *
+   * @param options
+   */
+  public drawEntities(options = {}): void {
+    this.beforeDraw()
+
+    for (const [entity, components] of Object.entries(this.entityComponents)) {
+      this.drawEntity({ entity, components }, options)
+    }
+
+    this.afterDraw()
+  }
+
+  /**
    * Called before the entities draw loop
    */
   public beforeDraw(): void { }
@@ -129,9 +128,9 @@ export abstract class System {
    * Called for each entity related to the System, after the update loop
    *
    * @param entityComponent
-   * @param layerName
+   * @param options
    */
-  public drawEntity(entityComponent: EntityComponent, layerName?: string): void { }
+  public drawEntity(entityComponent: EntityComponent, options = {}): void { }
 
   /**
    * Called after the entities draw loop
