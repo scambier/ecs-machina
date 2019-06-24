@@ -7,13 +7,24 @@ const log = require('debug')('ECS-Machina')
 
 export class World {
 
-  private entities: {
+  // TODO: make private with getter
+  public entities: {
     [entity in Entity]: BaseComponent[] // Why not [entity: Entity] ? https://github.com/microsoft/TypeScript/issues/1778#issuecomment-479986964
   } = {}
 
   private systems: System[] = []
 
   private counter = 0
+
+  public update(): void {
+    for (const system of this.getSystems()) {
+      system.beforeUpdate()
+      for (const [entity, components] of Object.entries(system.getEntityComponents())) {
+        system.updateEntity({ entity, components })
+      }
+      system.afterUpdate()
+    }
+  }
 
   /**
    * Creates an entity (a unique id) and adds it to the ECS database
@@ -115,7 +126,7 @@ export class World {
   /**
    * Returns an array of entities that own the required components
    */
-  public findEntities(componentTypes: string[]): Entity[] {
+  public findEntities(componentTypes: symbol[]): Entity[] {
     const result = []
     for (const [entity, components] of Object.entries(this.entities)) {
       const entityCmpTypes = components.map(o => o._type)

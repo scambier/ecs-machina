@@ -7,8 +7,10 @@ export interface BaseComponent {
    * Type guard attribute.<br/>
    * This value <i>must</i> be set to a unique string for each IComponent sub-type (hint: use a Symbol)
    */
-  _type: string
+  _type: symbol
 }
+
+export type ComponentType = symbol
 
 /**
  * A simple alias to quickly find Entity uses with your IDE

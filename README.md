@@ -14,7 +14,7 @@
 
 ECS-Machina is a library to help you implement the "[Entity-Component-System](https://twitter.com/mikegeig/status/1070005894132449283)" pattern in your games.
 
-This README only covers the basics. Please consult the [API documentation](./docs) for more informations.
+This README only covers the basics. Please consult the [API documentation]([./docs](https://scambier.github.io/ecs-machina/)) for more informations.
 
 ## Entities
 
@@ -22,7 +22,7 @@ Entities (`Entity`) are simple auto-incremented ids, saved as strings.
 
 ## Components
 
-Components are plain old JavaScript objects, that must have a `_type` attribute. The `_type` is a string discriminating the Component's type, and serves as a [type guard](https://basarat.gitbooks.io/typescript/docs/types/typeGuard.html#user-defined-type-guards).
+Components are plain old JavaScript objects, that must have a `_type` attribute. The `_type` is a Symbol discriminating the Component's type, and serves as a [type guard](https://basarat.gitbooks.io/typescript/docs/types/typeGuard.html#user-defined-type-guards).
 
 ### Writing the declaration of a Component
 

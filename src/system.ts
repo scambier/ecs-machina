@@ -1,6 +1,5 @@
 import { BaseComponent, Entity, EntityComponent } from './interfaces'
 import { arrayContainsArray } from './utils'
-import { World } from './world'
 
 /**
  * The base abstract class for all Systems
@@ -11,7 +10,7 @@ export abstract class System {
    * The list of components (referenced by their `_type` attribute)
    * required by the system to
    */
-  public abstract requiredComponents: string[]
+  public abstract requiredComponents: symbol[]
 
   /**
    * Hash of { entity: component[] }
