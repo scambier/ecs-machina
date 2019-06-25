@@ -31,7 +31,7 @@ export class World {
    */
   public createEntity(): Entity {
     const entity = (++this.entityId).toString()
-    this.addEntity(entity)
+    this.registerEntity(entity)
     return entity
   }
 
@@ -49,16 +49,37 @@ export class World {
   }
 
   /**
-   * Manually adds an entity to the ECS database.
+   * Manually registers an entity to the ECS database.
    * If the entity is already in the database, it is ignored.
    */
-  public addEntity(entity: Entity): void {
+  public registerEntity(entity: Entity): void {
     if (this.entities[entity]) {
-      console.error(`The entity ${entity} has already been added`)
+      console.error(`The entity ${entity} has already been registered`)
     }
     else {
       this.entities[entity] = []
     }
+  }
+
+  /**
+   * Returns the array of entities
+   */
+  public getEntities(): Entity[] {
+    return Object.keys(this.entities)
+  }
+
+  /**
+   * Returns an array of entities that own the required components
+   */
+  public findEntities(componentTypes: symbol[]): Entity[] {
+    const result = []
+    for (const [entity, components] of Object.entries(this.entities)) {
+      const entityCmpTypes = components.map(o => o._type)
+      if (arrayContainsArray(entityCmpTypes, componentTypes)) {
+        result.push(entity)
+      }
+    }
+    return result
   }
 
   /**
@@ -117,27 +138,6 @@ export class World {
   }
 
   /**
-   * Returns the array of entities
-   */
-  public getEntities(): Entity[] {
-    return Object.keys(this.entities)
-  }
-
-  /**
-   * Returns an array of entities that own the required components
-   */
-  public findEntities(componentTypes: symbol[]): Entity[] {
-    const result = []
-    for (const [entity, components] of Object.entries(this.entities)) {
-      const entityCmpTypes = components.map(o => o._type)
-      if (arrayContainsArray(entityCmpTypes, componentTypes)) {
-        result.push(entity)
-      }
-    }
-    return result
-  }
-
-  /**
    * Returns the components for a given entity
    */
   public getComponents(entity: Entity): Assemblage {
@@ -148,7 +148,7 @@ export class World {
    * Registers a system instance in the ECS database.
    * You can only register one (1) instance of each System's subclass
    */
-  public addSystem(system: System): void {
+  public registerSystem(system: System): void {
     for (const sys of this.systems) {
       if (sys.constructor.name === system.constructor.name) {
         console.error(`There is already a registered instance of ${system.constructor.name}`)
