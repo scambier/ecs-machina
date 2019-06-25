@@ -1,12 +1,15 @@
 {
   "name": "ecs-machina",
-  "version": "0.0.1",
-  "description": "A TypeScript Entity-Component-System Engine",
+  "private": true,
+  "version": "0.0.2",
+  "description": "Entity-Component-System Engine",
+  "homepage": "https://github.com/scambier/ecs-machina#readme",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsc --watch",
-    "build": "tsc && npm run build:docs",
-    "build:docs": "typedoc --options ./typedoc.config.js ./src",
+    "vuepress": "vuepress dev docs-raw",
+    "build": "node build.js && pnpm run build:docs",
+    "build:docs": "typedoc --options ./typedoc.config.js ./src && vuepress build docs-raw",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,18 +28,19 @@
   "bugs": {
     "url": "https://github.com/scambier/ecs-machina/issues"
   },
-  "homepage": "https://github.com/scambier/ecs-machina#readme",
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "@types/lodash-es": "^4.17.3",
     "@types/node": "^12.0.10",
     "coveralls": "^3.0.4",
     "jest": "^24.8.0",
+    "shelljs": "^0.8.3",
     "ts-jest": "^24.0.2",
     "ts-loader": "^6.0.4",
     "tslint": "^5.18.0",
     "typedoc": "^0.14.2",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.2",
+    "vuepress": "^1.0.2"
   },
   "dependencies": {
     "debug": "^4.1.1",

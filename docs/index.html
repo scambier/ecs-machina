@@ -66,7 +66,6 @@
 				</blockquote>
 				<ul>
 					<li><a href="#ECS-Machina">ECS-Machina</a><ul>
-							<li><a href="#What-it-is">What it is?</a></li>
 							<li><a href="#Entities">Entities</a></li>
 							<li><a href="#Components">Components</a><ul>
 									<li><a href="#Writing-the-declaration-of-a-Component">Writing the declaration of a Component</a></li>
@@ -74,19 +73,20 @@
 								</ul>
 							</li>
 							<li><a href="#Systems">Systems</a><ul>
-									<li><a href="#Callbacks">Callbacks</a></li>
 									<li><a href="#Example">Example</a></li>
 								</ul>
 							</li>
+							<li><a href="#World">World</a></li>
+							<li><a href="#Using-ECS-Machina-in-your-project">Using ECS-Machina in your project</a></li>
 						</ul>
 					</li>
 				</ul>
-				<h2 id="what-it-is-">What it is?</h2>
-				<p>ECS-Machina is a library to help you implement the <a href="https://twitter.com/mikegeig/status/1070005894132449283">&quot;Entity-Component-System&quot;</a> pattern in your games.</p>
+				<p>ECS-Machina is a library to help you implement the &quot;<a href="https://twitter.com/mikegeig/status/1070005894132449283">Entity-Component-System</a>&quot; pattern in your games.</p>
+				<p>This README only covers the basics. Please consult the <a href="%5B./docs%5D(https://scambier.github.io/ecs-machina/)">API documentation</a> for more informations.</p>
 				<h2 id="entities">Entities</h2>
 				<p>Entities (<code>Entity</code>) are simple auto-incremented ids, saved as strings.</p>
 				<h2 id="components">Components</h2>
-				<p>Components are plain old JavaScript objects, that must have a <code>_type</code> attribute. The <code>_type</code> is a string discriminating the Component&#39;s type, and serves as a <a href="https://basarat.gitbooks.io/typescript/docs/types/typeGuard.html#user-defined-type-guards">type guard</a>.</p>
+				<p>Components are plain old JavaScript objects, that must have a <code>_type</code> attribute. The <code>_type</code> is a Symbol discriminating the Component&#39;s type, and serves as a <a href="https://basarat.gitbooks.io/typescript/docs/types/typeGuard.html#user-defined-type-guards">type guard</a>.</p>
 				<h3 id="writing-the-declaration-of-a-component">Writing the declaration of a Component</h3>
 				<p>Efficiently declaring a Component can be done with those three elements:</p>
 				<ul>
@@ -132,8 +132,7 @@
 }</code></pre>
 				<h2 id="systems">Systems</h2>
 				<p>Each system can affect entities that own one or several specific components. For example, the &quot;MovementSystem&quot; will iterate through entities owning the &quot;TiledComponent&quot; (size and position) and the &quot;RigidBodyComponent&quot; (velocity)</p>
-				<p>Systems are classes that extend <code>System</code>. They have several callback methods that are called automatically during the system&#39;s lifetime.</p>
-				<h3 id="callbacks">Callbacks</h3>
+				<p>Systems are classes that extend <code>System</code>. They have several callback methods that are called automatically during the system&#39;s lifetime. See the</p>
 				<h3 id="example">Example</h3>
 				<pre><code class="language-ts"><span class="hljs-keyword">class</span> MovementSystem <span class="hljs-keyword">extends</span> System {
 
@@ -161,6 +160,10 @@
     tiled.y += body.vel.y * delta
   }
 }</code></pre>
+				<h2 id="world">World</h2>
+				<p>The <code>World</code> class instance is used to create entities, bind them with components, and register systems. It is like a database holding references for all of these objects, and is responsible of updating them.</p>
+				<h2 id="using-ecs-machina-in-your-project">Using ECS-Machina in your project</h2>
+				<p>[todo]</p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -184,6 +187,9 @@
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#assemblage" class="tsd-kind-icon">Assemblage</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#componenttype" class="tsd-kind-icon">Component<wbr>Type</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#entity" class="tsd-kind-icon">Entity</a>

@@ -1,6 +1,6 @@
 module.exports = {
   name: 'ECS-Machina documentation',
-  out: './docs',
+  out: './docs/api',
   tsconfig: 'tsconfig.json',
   target: 'es6',
   mode: 'file',
