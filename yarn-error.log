@@ -1,8 +1,8 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Users\cambi\AppData\Roaming\npm\pnpm-global\2\node_modules\yarn\bin\yarn.js add -D vuepress
+  C:\Program Files\nodejs\node.exe C:\Users\cambi\AppData\Roaming\npm\pnpm-global\2\node_modules\yarn\bin\yarn.js install
 
 PATH: 
-  C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\nodejs\;C:\Users\cambi\AppData\Local\Atlassian\SourceTree\git_local\bin;C:\Program Files\Calibre2\;C:\Users\cambi\AppData\Local\Microsoft\WindowsApps;;C:\Users\cambi\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\cambi\AppData\Roaming\npm
+  C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\nodejs\;C:\Users\cambi\AppData\Local\Atlassian\SourceTree\git_local\bin;C:\Program Files\Calibre2\;C:\Users\cambi\AppData\Local\Programs\Python\Python37-32;C:\Users\cambi\AppData\Local\Microsoft\WindowsApps;;C:\Users\cambi\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\cambi\AppData\Roaming\npm
 
 Yarn version: 
   1.16.0
@@ -14,7 +14,7 @@ Platform:
   win32 x64
 
 Trace: 
-  Error: ENOENT: no such file or directory, copyfile 'C:\Users\cambi\AppData\Local\Yarn\Cache\v4\npm-fill-range-7.0.1-1919a6a7c75fe38b2c7c77e5198535da9acdda40\node_modules\fill-range\LICENSE' -> 'C:\Dev\ecs-machina\node_modules\ts-loader\node_modules\fill-range\LICENSE'
+  Error: ENOENT: no such file or directory, copyfile 'C:\Users\cambi\AppData\Local\Yarn\Cache\v4\npm-fill-range-7.0.1-1919a6a7c75fe38b2c7c77e5198535da9acdda40\node_modules\fill-range\index.js' -> 'C:\Dev\ecs-machina\node_modules\ts-loader\node_modules\fill-range\index.js'
 
 npm manifest: 
   {
@@ -28,7 +28,7 @@ npm manifest:
       "start": "tsc --watch",
       "vuepress": "vuepress dev docs-raw",
       "build": "node build.js && pnpm run build:docs",
-      "build:docs": "typedoc --options ./typedoc.config.js ./src && vuepress build docs-raw",
+      "build:docs": "node build-docs.js",
       "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
@@ -58,6 +58,7 @@ npm manifest:
       "ts-loader": "^6.0.4",
       "tslint": "^5.18.0",
       "typedoc": "^0.14.2",
+      "typedoc-plugin-markdown": "^2.0.6",
       "typescript": "^3.5.2",
       "vuepress": "^1.0.2"
     },

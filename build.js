@@ -2,7 +2,6 @@ const distFolder = 'dist'
 
 const shell = require('shelljs')
 const fs = require('fs')
-const path = require('path')
 
 // Delete distFolder
 console.log('... Removing ' + distFolder + ' folder')

@@ -9,7 +9,7 @@
     "start": "tsc --watch",
     "vuepress": "vuepress dev docs-raw",
     "build": "node build.js && pnpm run build:docs",
-    "build:docs": "typedoc --options ./typedoc.config.js ./src && vuepress build docs-raw",
+    "build:docs": "node build-docs.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -39,6 +39,7 @@
     "ts-loader": "^6.0.4",
     "tslint": "^5.18.0",
     "typedoc": "^0.14.2",
+    "typedoc-plugin-markdown": "^2.0.6",
     "typescript": "^3.5.2",
     "vuepress": "^1.0.2"
   },
