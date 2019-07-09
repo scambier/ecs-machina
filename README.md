@@ -8,4 +8,4 @@
 
 ## Documentation
 
-Please consult the [dedicated documentation]([./docs](https://scambier.github.io/ecs-machina/)) for more information.
+Please consult the [dedicated documentation](https://scambier.github.io/ecs-machina/) for more information.

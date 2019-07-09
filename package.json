@@ -21,7 +21,9 @@
     "component",
     "system",
     "ecs",
-    "game"
+    "game",
+    "engine",
+    "framework"
   ],
   "author": "Simon Cambier",
   "license": "ISC",
@@ -39,7 +41,6 @@
     "ts-loader": "^6.0.4",
     "tslint": "^5.18.0",
     "typedoc": "^0.14.2",
-    "typedoc-plugin-markdown": "^2.0.6",
     "typescript": "^3.5.2",
     "vuepress": "^1.0.2"
   },

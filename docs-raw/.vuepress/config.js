@@ -1,6 +1,7 @@
 module.exports = {
   title: 'ECS Machina',
   description: 'An Entity-Component-System library',
+  base: '/ecs-machina/',
 
   plugins: ['@vuepress/last-updated'],
 
