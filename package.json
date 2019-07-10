@@ -8,7 +8,7 @@
   "scripts": {
     "start": "tsc --watch",
     "vuepress": "vuepress dev docs-raw",
-    "build": "node build.js && pnpm run build:docs",
+    "build": "node build.js && npm run build:docs",
     "build:docs": "node build-docs.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
