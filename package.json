@@ -33,8 +33,8 @@
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "@types/lodash-es": "^4.17.3",
-    "@types/node": "^12.0.10",
-    "coveralls": "^3.0.4",
+    "@types/node": "^12.6.2",
+    "coveralls": "^3.0.5",
     "jest": "^24.8.0",
     "shelljs": "^0.8.3",
     "ts-jest": "^24.0.2",
@@ -46,6 +46,6 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "lodash-es": "^4.17.11"
+    "lodash-es": "^4.17.14"
   }
 }
