@@ -75,4 +75,4 @@ class MyGame {
 }
 ```
 
-Please see the [System](/guides/system/)'s documentation for more details.
+Please see the [System](./system/)'s documentation for more details.

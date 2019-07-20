@@ -6,11 +6,11 @@ ECS-Machina is a library that helps you implement the "[Entity-Component-System]
 
 ## Installation
 
-Follow the [Installation Guide](/guides/installation)
+Follow the [Installation Guide](./guides/installation)
 
 ## Usage
 
-Refer to the several other [Guides](/guides) on how to use ECS-Machina.
+Refer to the several other [Guides](./guides) on how to use ECS-Machina.
 
 ## World
 

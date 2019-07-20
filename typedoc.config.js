@@ -1,6 +1,6 @@
 module.exports = {
   name: 'ECS-Machina documentation',
-  out: './docs/api',
+  out: './docs/.vuepress/dist/api',
   tsconfig: 'tsconfig.json',
   target: 'es6',
   mode: 'file',
