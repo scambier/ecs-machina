@@ -2,7 +2,7 @@
 
 The World is the database of all Entities, Components and Systems. It is also the main interface to create and update all these objects.
 
-:::tip
+:::tip TIP
 Please refer to the [Installation & Setup](./installation) guide to know how to create the World.
 :::
 
@@ -57,7 +57,7 @@ const entities: Entity[] = world.findEntities([BombComponent, ActiveComponent])
 const assemblage: Assemblage = world.getComponents(myEntity)
 ```
 
-:::tip
+:::tip TIP
 Learn more about [Assemblages](./assemblage).
 :::
 
@@ -79,7 +79,7 @@ assert(originalComponent !== addedComponentB)
 assert(addedComponentA !== addedComponentB)
 ```
 
-:::tip
+:::tip TIP
 ECS-Machina will always make a deep copy of the Component _before_ linking it to an Entity. This allows you to reuse the "same" original Component's values for multiple Entities, without sharing the same object.
 :::
 

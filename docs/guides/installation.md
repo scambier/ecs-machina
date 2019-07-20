@@ -10,7 +10,7 @@ ECS-Machina, by itself, does not do much. As its main goal is to manage your Ent
 
 ### Create the World
 
-The `World` instance is the central point of ECS-Machina. It manages and maintains references to Entities, Components and Systems.
+The [`World`](./world) instance is the central point of ECS-Machina. It manages and maintains references to Entities, Components and Systems.
 
 ::: tip
 The code snippets given in example are, of course, non functional. How exactly you will integrate ECS-Machina inside your game depends of your engine.
@@ -47,7 +47,7 @@ class MyGame {
 
 Updating Components without using these data to render Entities on your game is not really useful. But how you render your game strongly depends on the engine. It's left up to you on when to call your Systems' `drawEntities()` method.
 
-As an example, here's roughly how it works in Squared:
+As an example, here's roughly how it works in [Squared](https://github.com/scambier/squared-engine):
 
 ```ts
 class MyGame {

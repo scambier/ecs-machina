@@ -7,8 +7,8 @@ import { arrayContainsArray } from './utils'
 export abstract class System {
 
   /**
-   * The list of components (referenced by their `_type` attribute)
-   * required by the system to
+   * The list of Components' (the `_type` Symbol) used by the System
+   * to know what entities belong to it
    */
   public abstract requiredComponents: symbol[]
 
@@ -19,6 +19,7 @@ export abstract class System {
 
   /**
    * Returns the components array of an entity
+   *
    * @param entity The entity id
    */
   public getComponents(entity: string): BaseComponent[] {

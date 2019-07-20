@@ -2,6 +2,6 @@
 
 Please, select a guide on the left menu.
 
-:::tip
+:::tip TIP
 All given examples are in TypeScript.
 :::
