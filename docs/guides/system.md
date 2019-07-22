@@ -1,6 +1,6 @@
 # System
 
-[API documentation](../api/classes/system.html)
+[API documentation](https://scambier.github.io/ecs-machina/api/classes/system.html)
 
 Systems are where you write the logic of your game, to read (& write) your components, and act accordingly.
 

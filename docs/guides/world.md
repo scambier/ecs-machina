@@ -1,6 +1,6 @@
 # World
 
-[API documentation](../api/classes/world.html)
+[API documentation](https://scambier.github.io/ecs-machina/api/classes/world.html)
 
 The World is the database of all Entities, Components and Systems. It is also the main interface to create and update all these objects.
 
