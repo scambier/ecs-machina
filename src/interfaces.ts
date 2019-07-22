@@ -13,13 +13,19 @@ export interface BaseComponent {
 export type ComponentType = symbol
 
 /**
- * A simple alias to quickly find Entity uses with your IDE
+ * A simple alias to quickly find `Entity` uses with your IDE
  */
 export type Entity = string
 
+/**
+ * A type containing an Entity and its Components
+ */
 export type EntityComponent<T extends BaseComponent = BaseComponent> = {
   entity: Entity,
   components: T[]
 }
 
+/**
+ * An Assemblage is a read-only array of Components
+ */
 export type Assemblage = ReadonlyArray<BaseComponent>

@@ -1,6 +1,6 @@
 # Component
 
-Components are the data of your game. They must represent a "block" of related fields, on which the Systems will act. They are simple JavaScript objects that must implement the `BaseComponent` interface. This interface makes sure that all your Components have a `_type` property.
+Components are the data of your game. They are "blocks" of related fields, on which the Systems will act. They are simple JavaScript objects that must implement the `BaseComponent` interface. This interface makes sure that all your Components have a `_type` property.
 
 ## The `_type`'s role
 

@@ -110,7 +110,7 @@ export abstract class System {
    *
    * @param options
    */
-  public drawEntities(options = {}): void {
+  public draw(options = {}): void {
     this.beforeDraw()
 
     for (const [entity, components] of Object.entries(this.entityComponents)) {

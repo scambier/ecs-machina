@@ -1,5 +1,7 @@
 # World
 
+[API documentation](../api/classes/world.html)
+
 The World is the database of all Entities, Components and Systems. It is also the main interface to create and update all these objects.
 
 :::tip TIP
@@ -21,11 +23,11 @@ const otherEntity = world.createEntity() // otherEntity = '2'
 
 ```ts
 const customEntity: string = new guid()
-world.addEntity(customEntity)
+world.registerEntity(customEntity)
 ```
 
 :::warning
-You cannot register the same entity twice. It won't throw an exception, but an error will be logged.
+You cannot register the same entity twice.
 :::
 
 ### Destroy an Entity

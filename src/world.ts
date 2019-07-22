@@ -54,7 +54,7 @@ export class World {
    */
   public registerEntity(entity: Entity): void {
     if (this.entities[entity]) {
-      console.error(`The entity ${entity} has already been registered`)
+      throw new Error(`The entity "${entity}" has already been registered`)
     }
     else {
       this.entities[entity] = []

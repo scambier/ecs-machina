@@ -45,34 +45,4 @@ class MyGame {
 
 ### Draw the World
 
-Updating Components without using these data to render Entities on your game is not really useful. But how you render your game strongly depends on the engine. It's left up to you on when to call your Systems' `drawEntities()` method.
-
-As an example, here's roughly how it works in [Squared](https://github.com/scambier/squared-engine):
-
-```ts
-class MyGame {
-
-  draw() {
-    this.clearScreen()
-
-    // Loop through layers
-    for (const layer of this.level.layers) {
-
-      // Draw the layer's background
-      layer.draw()
-
-      // Draw entities for the current layer
-      for (const system of ig.world.getSystems()) {
-        system.drawEntities({ layerName: layer.name })
-      }
-    }
-
-    // Draw entities without layer
-    for (const system of ig.world.getSystems()) {
-      system.drawEntities()
-    }
-  }
-}
-```
-
-Please see the [System](./system/)'s documentation for more details.
+Please refer to the [Systems guide](./system#draw-loop) on how to draw your entities.
