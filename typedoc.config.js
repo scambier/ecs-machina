@@ -7,7 +7,7 @@ module.exports = {
   ignoreCompilerErrors: true,
   includeDeclarations: false,
   exclude: [
-    '**/__tests/**/*',
+    '**/__tests__/**/*',
     'src/debug/**/*'
   ],
   excludeNotExported: true,
