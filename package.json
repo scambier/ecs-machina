@@ -11,7 +11,7 @@
     "build": "node build.js && npm run build:docs",
     "build:docs": "node build-docs.js",
     "test": "jest --coverage --coverageReporters=lcov --coverageReporters=html",
-    "test:coveralls": "jest --coverageReporters=text-lcov | coveralls"
+    "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
