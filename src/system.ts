@@ -7,10 +7,10 @@ import { arrayContainsArray } from './utils'
 export abstract class System {
 
   /**
-   * The list of Components' (the `_type` Symbol) used by the System
+   * The list of Components (the Components' `_type` value) used by the System
    * to know what entities belong to it
    */
-  public abstract requiredComponents: symbol[]
+  public abstract requiredComponents: string[]
 
   /**
    * Hash of { entity: component[] }

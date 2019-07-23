@@ -71,7 +71,7 @@ export class World {
   /**
    * Returns an array of entities that own the required components
    */
-  public findEntities(componentTypes: symbol[]): Entity[] {
+  public findEntities(componentTypes: string[]): Entity[] {
     const result = []
     for (const [entity, components] of Object.entries(this.entities)) {
       const entityCmpTypes = components.map(o => o._type)
