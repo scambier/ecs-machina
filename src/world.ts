@@ -27,15 +27,6 @@ export class World {
   }
 
   /**
-   * Creates an entity (a unique id) and adds it to the ECS database
-   */
-  public createEntity(): Entity {
-    const entity = (++this.entityId).toString()
-    this.registerEntity(entity)
-    return entity
-  }
-
-  /**
    * Destroys an entity and its components from the ECS database
    */
   public destroyEntity(entity: Entity): void {
@@ -48,17 +39,22 @@ export class World {
     }
   }
 
-  /**
-   * Manually registers an entity to the ECS database.
-   * If the entity is already in the database, it is ignored.
-   */
-  public registerEntity(entity: Entity): void {
+   /**
+    * Creates AND registers a new Entity inside the World. If no argument is provided,
+    * will increment an internal id, and register its string value.
+    *
+    * @param entity - You can optionnaly provide yourself the Entity's value
+    * @returns The newly registered Entity
+    */
+  public createEntity(entity?: Entity): Entity {
+    entity = entity ? entity : (++this.entityId).toString()
     if (this.entities[entity]) {
       throw new Error(`The entity "${entity}" has already been registered`)
     }
     else {
       this.entities[entity] = []
     }
+    return entity
   }
 
   /**
@@ -108,8 +104,8 @@ export class World {
 
     // Link entity to system if requiredComponents match
     for (const system of this.systems) {
-      if (arrayContainsArray(this.entities[entity].map(o => o._type), system.requiredComponents)) {
-        system.addEntity(entity, this.entities[entity])
+      if (system.canAddEntity(entity)) {
+        system.addEntity(entity)
       }
     }
 
@@ -141,6 +137,7 @@ export class World {
    * Returns the components for a given entity
    */
   public getComponents(entity: Entity): Assemblage {
+    if (!this.entities[entity]) { throw Error(`Unknown entity ${entity}`) }
     return this.entities[entity]
   }
 
@@ -155,15 +152,19 @@ export class World {
         return
       }
     }
+    // World owns Systems, and Systems reference World
     this.systems.push(system)
+    system.world = this
+
     log(`Registered System ${system.constructor.name}`)
 
     // Add all concerned entities to this system
-    system.refreshEntities(this.entities)
+    system.rebuildEntities(this.entities)
   }
 
   /**
-   * Removed a system from the ECS database
+   * Remove a System from the ECS database.<br>
+   * This destroys the link between a System and a World
    */
   public removeSystem(system: System): void {
     pull(this.systems, system)

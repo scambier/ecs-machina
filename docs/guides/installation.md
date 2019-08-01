@@ -45,4 +45,4 @@ class MyGame {
 
 ### Draw the World
 
-Please refer to the [Systems guide](./system#draw-loop) on how to draw your entities.
+Please refer to the [Systems guide](./system#draw-loop) on how to draw with your Systems.

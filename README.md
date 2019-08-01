@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/scambier/ecs-machina.svg?branch=master)](https://travis-ci.com/scambier/ecs-machina)
+
 # ECS-Machina
 
 > A TypeScript Entity-Component-System Library

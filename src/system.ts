@@ -1,5 +1,6 @@
-import { BaseComponent, Entity, EntityComponent } from './interfaces'
+import { Assemblage, BaseComponent, Entity, EntityComponent } from './interfaces'
 import { arrayContainsArray } from './utils'
+import { World } from './world'
 
 /**
  * The base abstract class for all Systems
@@ -15,14 +16,23 @@ export abstract class System {
   /**
    * Hash of { entity: component[] }
    */
-  protected entityComponents: { [entity: string]: BaseComponent[] } = {}
+  protected entityComponents: { [entity: string]: Assemblage } = {}
+
+  private _world!: World
+  public get world(): World {
+    return this._world
+  }
+  public set world(v: World) {
+    if (this._world) { throw Error('Cannot reassign a System to a different World') }
+    this._world = v
+  }
 
   /**
    * Returns the components array of an entity
    *
    * @param entity The entity id
    */
-  public getComponents(entity: string): BaseComponent[] {
+  public getComponents(entity: string): Assemblage {
     return this.entityComponents[entity]
   }
 
@@ -36,14 +46,14 @@ export abstract class System {
   /**
    * Returns the hash of { entity: component[] }
    */
-  public getEntityComponents(): { [entity: string]: BaseComponent[] } {
+  public getEntityComponents(): { [entity: string]: Assemblage } {
     return this.entityComponents
   }
 
   /**
    * Rebuilds the entities hash
    */
-  public refreshEntities(entities: { [entity in Entity]: BaseComponent[] }): void {
+  public rebuildEntities(entities: { [entity in Entity]: Assemblage }): void {
     this.entityComponents = {}
     for (const [entity, components] of Object.entries(entities)) {
       if (arrayContainsArray(components.map(o => o._type), this.requiredComponents)) {
@@ -53,12 +63,16 @@ export abstract class System {
   }
 
   /**
-   * Adds an entity and its components to the current hash
+   * Adds an entity and its components to the current hash.<br>
+   * You should not call this method
    *
    * @param entity
-   * @param components
    */
-  public addEntity(entity: Entity, components: BaseComponent[]): void {
+  public addEntity(entity: Entity): void {
+    const components = this.world.getComponents(entity)
+    if (!this.canAddEntity(entity)) {
+      throw new Error('Components list incompatible with this system')
+    }
     this.entityComponents[entity] = components
     this.addedEntity(entity)
   }
@@ -77,6 +91,16 @@ export abstract class System {
    */
   public hasEntity(entity: Entity): boolean {
     return !!this.entityComponents[entity]
+  }
+
+  /**
+   * Returns if this system is compatible with the components
+   * @param entity
+   * @param components
+   */
+  public canAddEntity(entity: Entity): boolean {
+    const components = this.world.getComponents(entity)
+    return arrayContainsArray(components.map(o => o._type), this.requiredComponents)
   }
 
   //#region Callbacks
