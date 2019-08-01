@@ -17,6 +17,14 @@ describe('System', () => {
     world.registerSystem(system)
   })
 
+  describe('.world', () => {
+    it('should throw an error if the System is already bound to a World', () => {
+      expect(() => {
+        system.world = world
+      }).toThrow()
+    })
+  })
+
   describe('AddEntity()', () => {
     it('triggers the addedEntity callback', () => {
       // Arrange
@@ -103,6 +111,46 @@ describe('System', () => {
 
       // Assert
       expect(system.getEntities()).toEqual([])
+    })
+  })
+
+  describe('hasEntity', () => {
+    it('returns if a System owns an Entity', () => {
+      expect(system.hasEntity(entityA)).toBeTruthy()
+      world.destroyEntity(entityA)
+      expect(system.hasEntity(entityA)).toBeFalsy()
+    })
+  })
+
+  describe('draw()', () => {
+    it('calls beforeDraw() and afterDraw()', () => {
+      // Arrange
+      // @ts-ignore
+      system.beforeDraw = jest.fn()
+      // @ts-ignore
+      system.afterDraw = jest.fn()
+
+      // Act
+      system.draw()
+
+      // Assert
+      // @ts-ignore
+      expect(system.beforeDraw).toBeCalled()
+      // @ts-ignore
+      expect(system.afterDraw).toBeCalled()
+    })
+
+    it('calls drawEntity() for each Entity', () => {
+      // Arrange
+      // @ts-ignore
+      system.drawEntity = jest.fn()
+
+      // Act
+      system.draw()
+
+      // Assert
+      // @ts-ignore
+      expect(system.drawEntity).toBeCalledTimes(1)
     })
   })
 

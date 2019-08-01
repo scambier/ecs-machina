@@ -147,7 +147,7 @@ export abstract class System {
   /**
    * Called before the entities draw loop
    */
-  public beforeDraw(): void { }
+  protected beforeDraw(): void { }
 
   /**
    * Called for each entity related to the System, after the update loop
@@ -155,12 +155,12 @@ export abstract class System {
    * @param entityComponent
    * @param options
    */
-  public drawEntity(entityComponent: EntityComponent, options = {}): void { }
+  protected drawEntity(entityComponent: EntityComponent, options = {}): void { }
 
   /**
    * Called after the entities draw loop
    */
-  public afterDraw(): void { }
+  protected afterDraw(): void { }
 
   //#endregion Callbacks
 
