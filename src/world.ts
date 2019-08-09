@@ -27,27 +27,22 @@ export class World {
   }
 
   /**
-   * Destroys an entity and its components from the ECS database
+   * Creates AND registers a new Entity inside the World
+   *
+   * @returns The newly registered Entity
    */
-  public destroyEntity(entity: Entity): void {
-    // Remove entity references from ECS
-    delete this.entities[entity]
-
-    // Remove entity references from concerned systems
-    for (const system of this.systems) {
-      system.deleteEntity(entity)
-    }
+  public createEntity(): Entity {
+    const entity = (++this.entityId).toString()
+    return this.addEntity(entity)
   }
 
-   /**
-    * Creates AND registers a new Entity inside the World. If no argument is provided,
-    * will increment an internal id, and register its string value.
-    *
-    * @param entity - You can optionnaly provide yourself the Entity's value
-    * @returns The newly registered Entity
-    */
-  public createEntity(entity?: Entity): Entity {
-    entity = entity ? entity : (++this.entityId).toString()
+  /**
+   * Registers a new Entity inside the World
+   *
+   * @param entity
+   * @returns The newly registered Entity
+   */
+  public addEntity(entity: Entity): Entity {
     if (this.entities[entity]) {
       throw new Error(`The entity "${entity}" has already been registered`)
     }
@@ -79,6 +74,19 @@ export class World {
   }
 
   /**
+   * Destroys an entity and its components from the ECS database
+   */
+  public destroyEntity(entity: Entity): void {
+    // Remove entity references from ECS
+    delete this.entities[entity]
+
+    // Remove entity references from concerned systems
+    for (const system of this.systems) {
+      system.deleteEntity(entity)
+    }
+  }
+
+  /**
    * Links a component to an entity. If a component of the same type has already
    * been added, the properties of the new one will overwrite the original's.
    * The method makes a deep copy of the original component before adding it, and returns this copy.
@@ -86,7 +94,7 @@ export class World {
   public addComponent(entity: Entity, component: BaseComponent): BaseComponent {
     // Create the entity if it doesn't exist yet
     if (!this.entities[entity]) {
-      this.entities[entity] = []
+      this.addEntity(entity)
     }
 
     // Make a deep copy of the object
