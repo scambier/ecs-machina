@@ -1,6 +1,6 @@
 import { System } from '../system'
 import { World } from '../world'
-import { entityA, entityB, subComponentA, subComponentB, SubSystemA } from './stubs'
+import { entityA, entityB, subComponentA, subComponentB, SubSystemA, SubSystemB } from './stubs'
 
 describe('World', () => {
   let world: World
@@ -179,18 +179,85 @@ describe('World', () => {
       // Assert
       expect(system.getEntities()).toEqual([])
     })
+
+    it('adds the entity to the world if needed', () => {
+      // Arrange
+      const a = 'someEntity'
+
+      // Act
+      world.addComponent(a, { _type: 'cmp' })
+
+      // Assert
+      expect(world.getComponents(a)).toEqual([{ _type: 'cmp' }])
+    })
   })
 
   describe('removeComponent()', () => {
+    it('removes the component from its linked entity', () => {
+      // Arrange
+      const a = world.createEntity()
+      const cmp = world.addComponent(a, { _type: 'cmp' })
 
+      // Act
+      world.removeComponent(a, cmp)
+
+      // Assert
+      expect(world.getComponents(a)).toEqual([])
+    })
+
+    it('shows a warning if the object does not exist', () => {
+      // Arrange
+      const a = world.createEntity()
+      world.addComponent(a, { _type: 'cmp' })
+      let logs = ''
+      console['warn'] = jest.fn(output => logs = output)
+
+      // Act
+      world.removeComponent(a, { _type: 'foo' })
+
+      // Assert
+      expect(logs).toContain('This component does not exist')
+    })
+
+    it('shows another log if a different component of the same type exist', () => {
+      // Arrange
+      const a = world.createEntity()
+      world.addComponent(a, { _type: 'cmp' })
+      let logs = ''
+      console['warn'] = jest.fn(output => logs += output)
+
+      // Act
+      world.removeComponent(a, { _type: 'cmp' })
+
+      // Assert
+      expect(logs).toContain('This component does not exist')
+      expect(logs).toContain('Another component with _type "cmp" exists')
+    })
   })
 
   describe('getComponents()', () => {
+    it('returns components for an entity', () => {
+      // Arrange
+      const ent1 = world.createEntity()
+      const ent2 = world.createEntity()
+      world.addComponent(ent1, { _type: 'a' })
+      world.addComponent(ent1, { _type: 'b' })
+      world.addComponent(ent2, { _type: 'a' })
 
+      // Assert
+      expect(world.getComponents(ent1)).toEqual([{ _type: 'a' }, { _type: 'b' }])
+      expect(world.getComponents(ent2)).toEqual([{ _type: 'a' }])
+    })
   })
 
   describe('registerSystem()', () => {
+    it('registers the system into the workd', () => {
+      // Act
+      world.registerSystem(new SubSystemA())
 
+      // Assert
+      expect(world.getSystem(SubSystemA)).toBeTruthy()
+    })
   })
 
   describe('removeSystem()', () => {

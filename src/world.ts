@@ -127,6 +127,15 @@ export class World {
    * @param component
    */
   public removeComponent(entity: Entity, component: BaseComponent): void {
+    const components = this.getComponents(entity)
+    if (components.indexOf(component) === -1) {
+      const exists = components.find(o => o._type === component._type)
+      console.warn(`This component does not exist on entity ${entity}. Is it the same object?`)
+      if (exists) {
+        console.warn(`Another component with _type "${component._type}" exists. Use world.removeComponentByType() to remove components by their _type value.`)
+      }
+      return
+    }
     // Remove component from entityComponents
     pull(this.entities[entity], component)
 

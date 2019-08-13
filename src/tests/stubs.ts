@@ -15,9 +15,13 @@ export const subComponentB: SubComponentB = {
   _type: SubComponentB
 }
 
-// System
+// Systems
 export class SubSystemA extends System {
   public requiredComponents = [SubComponentA]
+}
+
+export class SubSystemB extends System {
+  public requiredComponents = [SubComponentB]
 }
 
 // Entities
