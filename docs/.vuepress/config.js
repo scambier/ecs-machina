@@ -20,6 +20,10 @@ module.exports = {
         text: 'API',
         link: 'https://scambier.github.io/ecs-machina/api'
       },
+      {
+        text: 'Github',
+        link: 'https://github.com/scambier/ecs-machina'
+      },
     ],
 
     // Sidebar
