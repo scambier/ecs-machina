@@ -91,7 +91,7 @@ export class World {
    * been added, the properties of the new one will overwrite the original's.
    * The method makes a deep copy of the original component before adding it, and returns this copy.
    */
-  public addComponent(entity: Entity, component: BaseComponent): BaseComponent {
+  public registerComponent(entity: Entity, component: BaseComponent): BaseComponent {
     // Create the entity if it doesn't exist yet
     if (!this.entities[entity]) {
       this.addEntity(entity)
@@ -151,6 +151,19 @@ export class World {
   }
 
   /**
+   * Removes a Component, from its `_type` value
+   *
+   * @param entity
+   * @param type
+   */
+  public removeComponentByType(entity: Entity, type: string): void {
+    const component = this.getComponents(entity).find(o => o._type === type)
+    if (component) {
+      return this.removeComponent(entity, component)
+    }
+  }
+
+  /**
    * Returns the components for a given entity
    */
   public getComponents(entity: Entity): Assemblage {
@@ -165,8 +178,7 @@ export class World {
   public registerSystem(system: System): void {
     for (const sys of this.systems) {
       if (sys.constructor.name === system.constructor.name) {
-        console.error(`There is already a registered instance of ${system.constructor.name}`)
-        return
+        throw new Error(`There is already a registered instance of ${system.constructor.name}`)
       }
     }
     // World owns Systems, and Systems reference World

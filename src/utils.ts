@@ -3,7 +3,7 @@
  * from the second one. FALSE otherwise.
  */
 export function arrayContainsArray<T>(superset: T[], subset: T[]): boolean {
-  if (0 === subset.length) {
+  if (subset.length === 0) {
     return false
   }
   return subset.every((value) => {

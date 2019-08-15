@@ -9,9 +9,9 @@ describe('System', () => {
     world = new World()
 
     world.addEntity(entityA)
-    world.addComponent(entityA, subComponentA)
+    world.registerComponent(entityA, subComponentA)
     world.addEntity(entityB)
-    world.addComponent(entityB, subComponentB)
+    world.registerComponent(entityB, subComponentB)
 
     system = new SubSystemA()
     world.registerSystem(system)
