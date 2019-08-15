@@ -1,4 +1,4 @@
-import { Assemblage, BaseComponent, Entity, EntityComponent } from './interfaces'
+import { BaseComponent, Entity, EntityComponent } from './interfaces'
 import { arrayContainsArray } from './utils'
 import { World } from './world'
 
@@ -16,7 +16,7 @@ export abstract class System {
   /**
    * Hash of { entity: component[] }
    */
-  protected entityComponents: { [entity: string]: Assemblage } = {}
+  protected entityComponents: { [entity: string]: BaseComponent[] } = {}
 
   private _world!: World
   public get world(): World {
@@ -32,7 +32,7 @@ export abstract class System {
    *
    * @param entity The entity id
    */
-  public getComponents(entity: string): Assemblage {
+  public getComponents(entity: string): BaseComponent[] {
     return this.entityComponents[entity]
   }
 
@@ -46,14 +46,14 @@ export abstract class System {
   /**
    * Returns the hash of { entity: component[] }
    */
-  public getEntityComponents(): { [entity: string]: Assemblage } {
+  public getEntityComponents(): { [entity: string]: BaseComponent[] } {
     return this.entityComponents
   }
 
   /**
    * Rebuilds the entities hash
    */
-  public rebuildEntities(entities: { [entity in Entity]: Assemblage }): void {
+  public rebuildEntities(entities: { [entity in Entity]: BaseComponent[] }): void {
     this.entityComponents = {}
     for (const [entity, components] of Object.entries(entities)) {
       if (arrayContainsArray(components.map(o => o._type), this.requiredComponents)) {

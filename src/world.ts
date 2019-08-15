@@ -1,5 +1,5 @@
 import { cloneDeep, pull } from 'lodash-es'
-import { Assemblage, BaseComponent, Entity } from './interfaces'
+import { BaseComponent, Entity } from './interfaces'
 import { System } from './system'
 import { arrayContainsArray } from './utils'
 
@@ -14,7 +14,7 @@ export class World {
 
   protected systems: System[] = []
 
-  protected entityId = 0
+  protected entityIncrements = 0
 
   public update(): void {
     for (const system of this.getSystems()) {
@@ -32,8 +32,8 @@ export class World {
    * @returns The newly registered Entity
    */
   public createEntity(): Entity {
-    const entity = (++this.entityId).toString()
-    return this.addEntity(entity)
+    const entity = (++this.entityIncrements).toString()
+    return this.registerEntity(entity)
   }
 
   /**
@@ -42,7 +42,7 @@ export class World {
    * @param entity
    * @returns The newly registered Entity
    */
-  public addEntity(entity: Entity): Entity {
+  public registerEntity(entity: Entity): Entity {
     if (this.entities[entity]) {
       throw new Error(`The entity "${entity}" has already been registered`)
     }
@@ -62,7 +62,7 @@ export class World {
   /**
    * Returns an array of entities that own the required components
    */
-  public findEntities(componentTypes: string[]): Entity[] {
+  public findEntitiesByComponents(componentTypes: string[]): Entity[] {
     const result = []
     for (const [entity, components] of Object.entries(this.entities)) {
       const entityCmpTypes = components.map(o => o._type)
@@ -94,7 +94,7 @@ export class World {
   public registerComponent(entity: Entity, component: BaseComponent): BaseComponent {
     // Create the entity if it doesn't exist yet
     if (!this.entities[entity]) {
-      this.addEntity(entity)
+      this.registerEntity(entity)
     }
 
     // Make a deep copy of the object
@@ -166,7 +166,7 @@ export class World {
   /**
    * Returns the components for a given entity
    */
-  public getComponents(entity: Entity): Assemblage {
+  public getComponents(entity: Entity): BaseComponent[] {
     if (!this.entities[entity]) { throw Error(`Unknown entity ${entity}`) }
     return this.entities[entity]
   }

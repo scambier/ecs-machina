@@ -69,7 +69,7 @@ describe('World', () => {
       const a = world.createEntity()
 
       // Assert
-      expect(() => { world.addEntity(a) }).toThrow()
+      expect(() => { world.registerEntity(a) }).toThrow()
     })
   })
 
@@ -84,7 +84,7 @@ describe('World', () => {
     })
   })
 
-  describe('findEntities()', () => {
+  describe('findEntitiesByComponents()', () => {
     it('finds entities', () => {
       // Arrange
       const a = world.createEntity()
@@ -92,7 +92,7 @@ describe('World', () => {
       world.registerComponent(b, { _type: 'cmp' })
 
       // Act
-      const components = world.findEntities(['cmp'])
+      const components = world.findEntitiesByComponents(['cmp'])
 
       // Assert
       expect(components).toEqual([b])

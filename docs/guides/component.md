@@ -6,13 +6,13 @@ Components are the data of your game. They are "blocks" of related fields, on wh
 
 Components are simple JavaScript objects, which allow us to easily de/serialize them from/to JSON. But since Components are nothing more than objects (not class instances), ECS Machina uses the `_type` property to differentiate them.
 
-## Define a Component
+## Defining a Component
 
 Efficiently declaring a Component can be done with those three elements:
 
 - The interface, extending `BaseComponent`
 - The `_type` value (a unique string)
-- The type guard function
+- Optionally, a type guard function
 
 Example:
 

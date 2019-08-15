@@ -20,12 +20,8 @@ export type Entity = string
 /**
  * A type containing an Entity and its Components
  */
-export type EntityComponent<T extends BaseComponent = BaseComponent> = {
+export type EntityComponent = {
   entity: Entity,
-  components: Assemblage<T>
+  components: BaseComponent[]
 }
 
-/**
- * An Assemblage is a read-only array of Components
- */
-export type Assemblage<T = BaseComponent> = ReadonlyArray<T>

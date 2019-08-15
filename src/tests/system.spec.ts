@@ -8,9 +8,9 @@ describe('System', () => {
   beforeEach(() => {
     world = new World()
 
-    world.addEntity(entityA)
+    world.registerEntity(entityA)
     world.registerComponent(entityA, subComponentA)
-    world.addEntity(entityB)
+    world.registerEntity(entityB)
     world.registerComponent(entityB, subComponentB)
 
     system = new SubSystemA()

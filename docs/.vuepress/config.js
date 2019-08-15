@@ -32,7 +32,6 @@ module.exports = {
         'entity',
         'component',
         'system',
-        'assemblage',
       ]
     }
   }

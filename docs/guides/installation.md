@@ -31,7 +31,7 @@ class MyGame {
 
 Now that your World is created, you need to keep it updated in your game loop. The World will update all the registered Systems, that will in turn update all their relevant Components.
 
-How you will do this depends of course of your engine
+How you will do this depends of course of your engine.
 
 ```ts
 class MyGame {

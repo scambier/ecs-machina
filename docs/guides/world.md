@@ -21,13 +21,15 @@ const otherEntity = world.createEntity() // otherEntity = '2'
 
 #### Manually register an Entity
 
+You can of course use your own ids to register entities.
+
 ```ts
 const customEntity: string = new guid()
 world.registerEntity(customEntity)
 ```
 
 :::warning
-You cannot register the same entity twice.
+You cannot register the same entity twice. Also, avoid to mix and match `createEntity()` and `registerEntity()` in the same project.
 :::
 
 ### Destroy an Entity
@@ -56,16 +58,12 @@ const entities: Entity[] = world.findEntities([BombComponent, ActiveComponent])
 ### Get the Components linked to an Entity
 
 ```ts
-const assemblage: Assemblage = world.getComponents(myEntity)
+const components = world.getComponents(myEntity)
 ```
-
-:::tip TIP
-Learn more about [Assemblages](./assemblage).
-:::
 
 ### Add a Component to an Entity
 
-Entities are nothing without attached Component. Adding a Component to an Entity will automatically add this Entity to all relevant Systems (if any).
+Entities are nothing without attached Components. Adding a Component to an Entity will automatically register this Entity to all relevant Systems (if any).
 
 ```ts
 const entityA = world.createEntity()
@@ -81,21 +79,20 @@ assert(originalComponent !== addedComponentB)
 assert(addedComponentA !== addedComponentB)
 ```
 
-:::tip TIP
+:::tip IMPORTANT TIP
 ECS-Machina will always make a deep copy of the Component _before_ linking it to an Entity. This allows you to reuse the "same" original Component's values for multiple Entities, without sharing the same object.
 :::
 
 ### Remove a Component from an Entity
 
 ```ts
-const originalComponent = { /* ... */ }
+const originalComponent = { _type: 'foobar' }
 const addedComponent = world.addComponent(myEntity, originalComponent)
 world.removeComponent(myEntity, addedComponent)
-```
 
-:::warning
-Take note, from this example, that the removed component is `addedComponent` (and **not** `originalComponent`)
-:::
+// You can also remove a Component by its type
+world.removeComponentByType(myEntity, 'foobar')
+```
 
 ## Systems
 
@@ -114,7 +111,7 @@ You can only register one (1) instance of each System.
 
 ### Remove a System
 
-Removing a System will halt its update process. You can always re-register a previously removed System
+Removing a System will halt its update process. You can always re-register a previously removed System.
 
 ```ts
 world.removeSystem(mySystem)
