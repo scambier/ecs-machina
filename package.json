@@ -9,7 +9,7 @@
     "start": "tsc --watch",
     "vuepress": "vuepress dev docs",
     "build": "node build.js && npm run build:docs",
-    "build:docs": "node build-docs.js",
+    "publish-docs": "node build-docs.js",
     "test": "jest --coverage --coverageReporters=lcov --coverageReporters=html",
     "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls"
   },

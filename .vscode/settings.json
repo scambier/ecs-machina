@@ -10,5 +10,6 @@
 	"editor.codeActionsOnSave": {
 		"source.organizeImports": false,
 		"source.fixAll.tslint": true
-	},
+    },
+    "files.autoSave": "onFocusChange",
 }
