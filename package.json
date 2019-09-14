@@ -32,21 +32,21 @@
     "url": "https://github.com/scambier/ecs-machina/issues"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.15",
+    "@types/jest": "^24.0.18",
     "@types/lodash-es": "^4.17.3",
     "@types/node": "^12.6.2",
-    "coveralls": "^3.0.5",
-    "jest": "^24.8.0",
+    "coveralls": "^3.0.6",
+    "jest": "^24.9.0",
     "shelljs": "^0.8.3",
-    "ts-jest": "^24.0.2",
-    "ts-loader": "^6.0.4",
-    "tslint": "^5.18.0",
+    "ts-jest": "^24.1.0",
+    "ts-loader": "^6.1.0",
+    "tslint": "^5.20.0",
     "typedoc": "^0.15.0",
-    "typescript": "^3.5.2",
-    "vuepress": "^1.0.3"
+    "typescript": "^3.6.3",
+    "vuepress": "^1.0.4"
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "lodash-es": "^4.17.14"
+    "lodash-es": "^4.17.15"
   }
 }
