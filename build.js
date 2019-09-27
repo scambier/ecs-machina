@@ -15,6 +15,7 @@ shell.exec('tsc')
 console.log('... Copying files')
 const pkg = require('./package.json')
 delete pkg.private // Make dist folder public
+delete pkg.scripts
 fs.writeFileSync(distFolder + '/package.json', JSON.stringify(pkg, null, 2), 'utf8')
 
 // Copy other files
