@@ -20,7 +20,7 @@ export class World {
     for (const system of this.getSystems()) {
       system.beforeUpdate()
       for (const [entity, components] of Object.entries(system.getEntityComponents())) {
-        system.updateEntity({ entity, components })
+        system.updateEntity(entity, components)
       }
       system.afterUpdate()
     }

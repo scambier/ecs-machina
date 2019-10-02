@@ -1,4 +1,4 @@
-import { BaseComponent, Entity, EntityComponent } from './interfaces'
+import { BaseComponent, Entity } from './interfaces'
 import { arrayContainsArray } from './utils'
 import { World } from './world'
 
@@ -15,6 +15,7 @@ export abstract class System {
 
   /**
    * Hash of { entity: component[] }
+   * TODO: use a Map type?
    */
   protected entityComponents: { [entity: string]: BaseComponent[] } = {}
 
@@ -120,9 +121,10 @@ export abstract class System {
   /**
    * Called for each entity related to the System
    *
-   * @param entityComponent
+   * @param entity - The entity ID
+   * @param components - Its array of components
    */
-  public updateEntity(entityComponent: EntityComponent): void { }
+  public updateEntity(entity: string, components: BaseComponent[]): void { }
 
   /**
    * Called after the entities update loop
@@ -138,7 +140,7 @@ export abstract class System {
     this.beforeDraw()
 
     for (const [entity, components] of Object.entries(this.entityComponents)) {
-      this.drawEntity({ entity, components }, options)
+      this.drawEntity(entity, components, options)
     }
 
     this.afterDraw()
@@ -152,10 +154,11 @@ export abstract class System {
   /**
    * Called for each entity related to the System, after the update loop
    *
-   * @param entityComponent
-   * @param options
+   * @param entity - The entity ID
+   * @param components - Its array of components
+   * @param options - An object to pass your own data
    */
-  protected drawEntity(entityComponent: EntityComponent, options = {}): void { }
+  protected drawEntity(entity: string, components: BaseComponent[], options = {}): void { }
 
   /**
    * Called after the entities draw loop

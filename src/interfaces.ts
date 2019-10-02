@@ -16,12 +16,3 @@ export interface BaseComponent {
  * A simple alias to quickly find `Entity` uses with your IDE
  */
 export type Entity = string
-
-/**
- * A type containing an Entity and its Components
- */
-export type EntityComponent = {
-  entity: Entity,
-  components: BaseComponent[]
-}
-

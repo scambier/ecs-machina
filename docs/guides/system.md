@@ -8,7 +8,7 @@ Systems are where you write the logic of your game, to read (& write) your compo
 
 ```ts
 import { isRigidBodyComponent, isTiledComponent, RigidBodyComponent, TiledComponent } from '../components'
-import { EntityComponent, System } from 'ecs-machina'
+import { System } from 'ecs-machina'
 import { ig } from '../ig'
 const log = require('debug')('squared:movingSystem')
 
@@ -23,7 +23,7 @@ export class MovingSystem extends System {
    * Updates the tiledComponent's coordinates
    * according to rigidBodyComponent's velocity
    */
-  public updateEntity(ec: EntityComponent): void {
+  public updateEntity(entity: string, components: BaseComponent[]): void {
     const delta = ig.game.deltaTime
     const tiled = ec.components.find(isTiledComponent)!
     const body = ec.components.find(isRigidBodyComponent)!
@@ -43,7 +43,7 @@ Systems updates are automatically called within the `world.update()` method, in 
 Three methods are called during the update loop:
 
 - `beforeUpdate()`, at the beginning of each update
-- `updateEntity(entityComponent: EntityComponent)`, for each Entity linked to your System
+- `updateEntity(entity: string, components: BaseComponent[])`, for each Entity linked to your System
 - `afterUpdate()`, once that all Entities have been updated
 
 ## Draw loop
@@ -55,7 +55,7 @@ Once your Components have been updated, you still have to draw them on screen. E
 Each system has a `draw(options = {})` method that you must call yourself. This `draw()` method will in turn call back three other methods, similar to those of the update loop:
 
 - `beforeDraw()`
-- `drawEntity(entityComponent: EntityComponent, options = {})`
+- `drawEntity(entity: string, components: BaseComponent[], options = {})`
 - `afterDraw()`
 
 As an example, here's roughly how it works in [Squared](https://github.com/scambier/squared-engine):
@@ -89,14 +89,14 @@ class MyGame {
 And here's the `debugSystem.drawEntity()` implementation (it draws a red square around the Entity):
 
 ```ts
-import { EntityComponent, System } from 'ecs-machina'
+import { System } from 'ecs-machina'
 import { DebugComponent, isDebugComponent, isTiledComponent, TiledComponent } from '../components'
 import { ig } from '../ig'
 
 export class DebugSystem extends System {
   public requiredComponents = [DebugComponent, TiledComponent]
 
-  public drawEntity(ec: EntityComponent): void {
+  public drawEntity(entity: string, components: BaseComponent[]): void {
     const debug = ec.components.find(isDebugComponent)!
     const tiled = ec.components.find(isTiledComponent)!
     const scale = ig.game.scale
