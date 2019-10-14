@@ -75,7 +75,7 @@ export abstract class System {
       throw new Error('Components list incompatible with this system')
     }
     this.entityComponents[entity] = components
-    this.addedEntity(entity)
+    this.addedEntity(entity, components)
   }
 
   /**
@@ -111,7 +111,7 @@ export abstract class System {
    *
    * @param entity
    */
-  public addedEntity(entity: Entity): void { }
+  public addedEntity(entity: Entity, components: BaseComponent[]): void { }
 
   /**
    * Called before the entities update loop

@@ -8,8 +8,6 @@ export interface BaseComponent {
    * This value <i>must</i> be set to a unique string for each IComponent sub-type
    */
   _type: string
-
-  [key: string]: any
 }
 
 /**
