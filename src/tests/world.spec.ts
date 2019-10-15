@@ -1,6 +1,7 @@
 import { System } from '../system'
 import { World } from '../world'
-import { entityA, entityB, subComponentA, subComponentB, SubSystemA, SubSystemB } from './stubs'
+import { subComponentA, SubSystemA, SubSystemB } from './stubs'
+import { BaseComponent } from '../interfaces'
 
 describe('World', () => {
   let world: World
@@ -142,13 +143,16 @@ describe('World', () => {
     it('updates a component if it\'s already added', () => {
       // Arrange
       const a = world.createEntity()
+      interface FooCmp extends BaseComponent {
+        foo: string
+      }
 
       // Act
-      world.registerComponent(a, { _type: 'cmp', foo: 'bar' })
-      world.registerComponent(a, { _type: 'cmp', foo: 'bar2' })
+      world.registerComponent(a, { _type: 'cmp', foo: 'bar' } as FooCmp)
+      world.registerComponent(a, { _type: 'cmp', foo: 'bar2' } as FooCmp)
 
       // Assert
-      const cmp = world.getComponents(a)[0]
+      const cmp = world.getComponents(a)[0] as FooCmp
       expect(cmp.foo).toBe('bar2')
     })
 
