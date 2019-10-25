@@ -14,7 +14,7 @@ describe('World', () => {
       beforeUpdate: jest.fn(),
       afterUpdate: jest.fn(),
       updateEntity: jest.fn(),
-      getEntityComponents: jest.fn().mockReturnValue({ '1': [], '2': [] })
+      getEntityComponents: jest.fn().mockReturnValue(new Map([[1, []], [2, []]]))
     } as unknown as System
   })
 
