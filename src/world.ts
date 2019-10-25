@@ -8,9 +8,7 @@ const log = require('debug')('ECS-Machina')
 export class World {
 
   // TODO: make protected with getter
-  public entities: {
-    [entity in Entity]: BaseComponent[] // Why not [entity: Entity] ? https://github.com/microsoft/TypeScript/issues/1778#issuecomment-479986964
-  } = Object.create(null)
+  public entities: Map<Entity, BaseComponent[]> = new Map()
 
   protected systems: System[] = []
 
@@ -43,11 +41,11 @@ export class World {
    * @returns The newly registered Entity
    */
   public registerEntity(entity: Entity): Entity {
-    if (this.entities[entity]) {
+    if (this.entities.get(entity)) {
       throw new Error(`The entity "${entity}" has already been registered`)
     }
     else {
-      this.entities[entity] = []
+      this.entities.set(entity, [])
     }
     return entity
   }
@@ -56,20 +54,24 @@ export class World {
    * Returns the array of entities
    */
   public getEntities(): Entity[] {
-    return Object.keys(this.entities)
+    return Array.from(this.entities.keys())
   }
 
   /**
-   * Returns an array of entities that own the required components
+   * Returns a Map<Entity, BaseComponent[]> matching the componentTypes
+   *
+   * @param componentTypes - The components used to filter
    */
-  public findEntitiesByComponents(componentTypes: string[]): Entity[] {
-    const result = []
-    for (const [entity, components] of Object.entries(this.entities)) {
+  public findEntitiesByComponents(componentTypes: string[]): Map<Entity, BaseComponent[]> {
+    const result: Map<Entity, BaseComponent[]> = new Map()
+
+    this.entities.forEach((components, entity) => {
       const entityCmpTypes = components.map(o => o._type)
       if (arrayContainsArray(entityCmpTypes, componentTypes)) {
-        result.push(entity)
+        result.set(entity, components)
       }
-    }
+    })
+
     return result
   }
 
@@ -78,7 +80,7 @@ export class World {
    */
   public destroyEntity(entity: Entity): void {
     // Remove entity references from ECS
-    delete this.entities[entity]
+    this.entities.delete(entity)
 
     // Remove entity references from concerned systems
     for (const system of this.systems) {
@@ -93,22 +95,23 @@ export class World {
    */
   public registerComponent(entity: Entity, component: BaseComponent): BaseComponent {
     // Create the entity if it doesn't exist yet
-    if (!this.entities[entity]) {
+    if (!this.entities.has(entity)) {
       this.registerEntity(entity)
     }
+    const components = this.entities.get(entity)!
 
     // Make a deep copy of the object
     component = cloneDeep(component)
 
     // If an entity of the same type has already been added,
     // update its properties
-    const original = this.entities[entity].find(o => o._type === component._type)
+    const original = components.find(o => o._type === component._type)
     if (original) {
-      pull(this.entities[entity], original)
+      pull(components, original)
       component = Object.assign(original, component)
     }
 
-    this.entities[entity].push(component)
+    components.push(component)
 
     // Link entity to system if requiredComponents match
     for (const system of this.systems) {
@@ -137,13 +140,13 @@ export class World {
       return
     }
     // Remove component from entityComponents
-    pull(this.entities[entity], component)
+    pull(components, component)
 
     // Loop through systems to remove entity if needed
     for (const system of this.systems) {
       if (system.hasEntity(entity)) {
         // pull(system.entityComponents[entity], component)
-        if (!arrayContainsArray(this.entities[entity].map(o => o._type), system.requiredComponents)) {
+        if (!arrayContainsArray(components.map(o => o._type), system.requiredComponents)) {
           system.deleteEntity(entity)
         }
       }
@@ -165,10 +168,12 @@ export class World {
 
   /**
    * Returns the components for a given entity
+   *
+   * @param entity
    */
   public getComponents(entity: Entity): BaseComponent[] {
-    if (!this.entities[entity]) { throw Error(`Unknown entity ${entity}`) }
-    return this.entities[entity]
+    if (!this.entities.has(entity)) { throw Error(`Unknown entity ${entity}`) }
+    return this.entities.get(entity)!
   }
 
   /**

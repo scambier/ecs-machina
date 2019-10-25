@@ -96,7 +96,8 @@ describe('World', () => {
       const components = world.findEntitiesByComponents(['cmp'])
 
       // Assert
-      expect(components).toEqual([b])
+      expect(components.has(b)).toBeTruthy()
+      expect(components.get(b)).toEqual([{ _type: 'cmp' }])
     })
   })
 
