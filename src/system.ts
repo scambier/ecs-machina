@@ -1,5 +1,5 @@
 import { BaseComponent, Entity } from './interfaces'
-import { arrayContainsArray } from './utils'
+import { arrayContainsArray, hashToMap } from './utils'
 import { World } from './world'
 
 /**
@@ -17,7 +17,8 @@ export abstract class System {
    * Hash of { entity: component[] }
    * TODO: use a Map type?
    */
-  protected entityComponents: { [entity: string]: BaseComponent[] } = {}
+  // protected entityComponents: { [entity: string]: BaseComponent[] } = {}
+  protected entityComponents: Map<Entity, BaseComponent[]> = new Map()
 
   private _world!: World
   public get world(): World {
@@ -34,33 +35,41 @@ export abstract class System {
    * @param entity The entity id
    */
   public getComponents(entity: string): BaseComponent[] {
-    return this.entityComponents[entity]
+    return this.entityComponents.get(entity)!
   }
 
   /**
    *  Returns the list of entities for this system
    */
   public getEntities(): Entity[] {
-    return Object.keys(this.entityComponents)
+    return Array.from(this.entityComponents.keys())
   }
 
   /**
    * Returns the hash of { entity: component[] }
    */
-  public getEntityComponents(): { [entity: string]: BaseComponent[] } {
+  public getEntityComponents(): Map<Entity, BaseComponent[]> {
     return this.entityComponents
   }
 
   /**
    * Rebuilds the entities hash
    */
-  public rebuildEntities(entities: { [entity in Entity]: BaseComponent[] }): void {
-    this.entityComponents = {}
-    for (const [entity, components] of Object.entries(entities)) {
-      if (arrayContainsArray(components.map(o => o._type), this.requiredComponents)) {
-        this.entityComponents[entity] = components
-      }
+  public rebuildEntities(entities: Map<Entity, BaseComponent[]> | { [entity in Entity]: BaseComponent[] }): void {
+
+    // Convert Object to Map
+    if (!(entities instanceof Map)) {
+      entities = hashToMap(entities)
     }
+
+    this.entityComponents.clear()
+
+    entities.forEach((components, entity) => {
+      if (arrayContainsArray(components.map(o => o._type), this.requiredComponents)) {
+        this.entityComponents.set(entity, components)
+      }
+    })
+
   }
 
   /**
@@ -74,7 +83,7 @@ export abstract class System {
     if (!this.canAddEntity(entity)) {
       throw new Error('Components list incompatible with this system')
     }
-    this.entityComponents[entity] = components
+    this.entityComponents.set(entity, components)
     this.addedEntity(entity, components)
   }
 
@@ -84,14 +93,14 @@ export abstract class System {
    * @param entity
    */
   public deleteEntity(entity: Entity): void {
-    delete this.entityComponents[entity]
+    this.entityComponents.delete(entity)
   }
 
   /**
    * Does the entity exists with the system
    */
   public hasEntity(entity: Entity): boolean {
-    return !!this.entityComponents[entity]
+    return this.entityComponents.has(entity)
   }
 
   /**
@@ -139,9 +148,9 @@ export abstract class System {
   public draw(options = {}): void {
     this.beforeDraw()
 
-    for (const [entity, components] of Object.entries(this.entityComponents)) {
+    this.entityComponents.forEach((components, entity) => {
       this.drawEntity(entity, components, options)
-    }
+    })
 
     this.afterDraw()
   }

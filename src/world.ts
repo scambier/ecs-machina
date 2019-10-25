@@ -10,7 +10,7 @@ export class World {
   // TODO: make protected with getter
   public entities: {
     [entity in Entity]: BaseComponent[] // Why not [entity: Entity] ? https://github.com/microsoft/TypeScript/issues/1778#issuecomment-479986964
-  } = {}
+  } = Object.create(null)
 
   protected systems: System[] = []
 

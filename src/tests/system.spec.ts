@@ -2,7 +2,7 @@ import { World } from '../world'
 import { entityA, entityB, subComponentA, subComponentB, SubSystemA } from './stubs'
 
 describe('System', () => {
-  let system: SubSystemA
+  let systemA: SubSystemA
   let world: World
 
   beforeEach(() => {
@@ -13,14 +13,14 @@ describe('System', () => {
     world.registerEntity(entityB)
     world.registerComponent(entityB, subComponentB)
 
-    system = new SubSystemA()
-    world.registerSystem(system)
+    systemA = new SubSystemA()
+    world.registerSystem(systemA)
   })
 
   describe('.world', () => {
     it('should throw an error if the System is already bound to a World', () => {
       expect(() => {
-        system.world = world
+        systemA.world = world
       }).toThrow()
     })
   })
@@ -28,56 +28,53 @@ describe('System', () => {
   describe('AddEntity()', () => {
     it('triggers the addedEntity callback', () => {
       // Arrange
-      system.addedEntity = jest.fn()
+      systemA.addedEntity = jest.fn()
       // Act
-      system.addEntity(entityA)
+      systemA.addEntity(entityA)
       // Assert
-      expect(system.addedEntity).toHaveBeenCalled()
+      expect(systemA.addedEntity).toHaveBeenCalled()
     })
 
     it('throws en error when adding an incorrect entity', () => {
       // Act & Assert
-      expect(() => { system.addEntity(entityB) }).toThrow()
+      expect(() => { systemA.addEntity(entityB) }).toThrow()
     })
   })
 
   describe('getComponents()', () => {
     it('gets the components for a given entity', () => {
       // Arrange
-      system.addEntity(entityA)
+      systemA.addEntity(entityA)
       // Assert
-      expect(system.getComponents(entityA)).toContainEqual(subComponentA)
+      expect(systemA.getComponents(entityA)).toContainEqual(subComponentA)
     })
   })
 
   describe('getEntities()', () => {
     it('gets the entities for the system', () => {
       // Arrange
-      system.addEntity(entityA)
+      systemA.addEntity(entityA)
       // Assert
-      expect(system.getEntities()).toContain(entityA)
+      expect(systemA.getEntities()).toContain(entityA)
     })
   })
 
   describe('getEntityComponents()', () => {
     it('should add the entity to the system', () => {
       // Arrange
-      system.addEntity(entityA)
+      systemA.addEntity(entityA)
       // Act
-      const ec = system.getEntityComponents()
+      const ec = systemA.getEntityComponents()
       // Assert
-      expect(ec).toHaveProperty(entityA)
-      expect(ec[entityA]).toContainEqual(subComponentA)
+      expect(ec.has(entityA)).toBeTruthy()
+      expect(ec.get(entityA)).toContainEqual(subComponentA)
     })
 
     it('should NOT add the entity to the system', () => {
-      // Arrange
-      system.addEntity(entityA)
-      // Act
-      const ec = system.getEntityComponents()
-      // Assert
-      expect(ec).toHaveProperty(entityA)
-      expect(ec[entityA]).toContainEqual(subComponentA)
+      // Act & Assert
+      expect(() => {
+        systemA.addEntity(entityB)
+      }).toThrow()
     })
   })
 
@@ -85,40 +82,44 @@ describe('System', () => {
     it('clears the entities hash', () => {
       // Arrange
       const ec = { [entityA]: [subComponentA] }
+
       // Act
-      system.rebuildEntities(ec)
+      systemA.rebuildEntities(ec)
+
       // Assert
-      expect(system.getEntityComponents()).toEqual(ec)
+      expect(systemA.getEntityComponents().get(entityA)).toEqual([subComponentA])
     })
 
     it('rebuilds the entities hash', () => {
       // Arrange
-      const ec = { [entityA]: [subComponentB] }
+      const ec = { [entityA]: [subComponentB] } // Invalid object for the system
+
       // Act
-      system.rebuildEntities(ec)
+      systemA.rebuildEntities(ec)
+
       // Assert
-      expect(system.getEntityComponents()).toEqual({})
+      expect(systemA.getEntityComponents()).toEqual(new Map())
     })
   })
 
   describe('deleteEntity()', () => {
     it('deletes entities', () => {
       // Arrange
-      system.addEntity(entityA)
+      systemA.addEntity(entityA)
 
       // Act
-      system.deleteEntity(entityA)
+      systemA.deleteEntity(entityA)
 
       // Assert
-      expect(system.getEntities()).toEqual([])
+      expect(systemA.getEntities()).toEqual([])
     })
   })
 
   describe('hasEntity', () => {
     it('returns if a System owns an Entity', () => {
-      expect(system.hasEntity(entityA)).toBeTruthy()
+      expect(systemA.hasEntity(entityA)).toBeTruthy()
       world.destroyEntity(entityA)
-      expect(system.hasEntity(entityA)).toBeFalsy()
+      expect(systemA.hasEntity(entityA)).toBeFalsy()
     })
   })
 
@@ -126,31 +127,31 @@ describe('System', () => {
     it('calls beforeDraw() and afterDraw()', () => {
       // Arrange
       // @ts-ignore
-      system.beforeDraw = jest.fn()
+      systemA.beforeDraw = jest.fn()
       // @ts-ignore
-      system.afterDraw = jest.fn()
+      systemA.afterDraw = jest.fn()
 
       // Act
-      system.draw()
+      systemA.draw()
 
       // Assert
       // @ts-ignore
-      expect(system.beforeDraw).toBeCalled()
+      expect(systemA.beforeDraw).toBeCalled()
       // @ts-ignore
-      expect(system.afterDraw).toBeCalled()
+      expect(systemA.afterDraw).toBeCalled()
     })
 
     it('calls drawEntity() for each Entity', () => {
       // Arrange
       // @ts-ignore
-      system.drawEntity = jest.fn()
+      systemA.drawEntity = jest.fn()
 
       // Act
-      system.draw()
+      systemA.draw()
 
       // Assert
       // @ts-ignore
-      expect(system.drawEntity).toBeCalledTimes(1)
+      expect(systemA.drawEntity).toBeCalledTimes(1)
     })
   })
 
