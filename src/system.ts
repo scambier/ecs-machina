@@ -15,9 +15,7 @@ export abstract class System {
 
   /**
    * Hash of { entity: component[] }
-   * TODO: use a Map type?
    */
-  // protected entityComponents: { [entity: string]: BaseComponent[] } = {}
   protected entityComponents: Map<Entity, BaseComponent[]> = new Map()
 
   private _world!: World
