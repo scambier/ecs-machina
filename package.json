@@ -1,16 +1,16 @@
 {
   "name": "ecs-machina",
-  "private": true,
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "Entity-Component-System Engine",
   "homepage": "https://github.com/scambier/ecs-machina#readme",
   "main": "dist/index.js",
   "files": [
-    "./dist"
+    "dist"
   ],
   "scripts": {
     "start": "tsc --watch",
     "vuepress": "vuepress dev docs",
+    "prepack": "npm run build",
     "build": "node build.js",
     "publish-docs": "node build-docs.js",
     "test": "jest --coverage --coverageReporters=lcov --coverageReporters=html",
