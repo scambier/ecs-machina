@@ -1,11 +1,11 @@
 export type Entity = string
-export type ComponentData<T = any> = { [K in keyof T]: T[K] }/* & { _type: string }*/
+export type ComponentData<T = any> = T extends ComponentFactory ? never : { [K in keyof T]: T[K] }/* & { _type: string }*/
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never;
 
 /**
  * The Component Factory, used to generate components of the same type
  */
-export type ComponentFactory<T = any> = { (data: T): ComponentData<T>; _type: string }
+export type ComponentFactory<T = any> = { (data?: T): ComponentData<T>; _type: string }
 
 type ComponentId = string
 type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
@@ -18,9 +18,9 @@ let componentFactoryId = 0
  * @returns The Component Factory
  */
 export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-  const cmpKey: ComponentId = 'cmp_' + (++componentFactoryId).toString()
+  const cmpKey: ComponentId = (++componentFactoryId).toString()
 
-  const fn: ComponentFactory<T> = function(data) {
+  const fn: ComponentFactory<T> = function(data = {} as any) {
     const cmp = { _type: cmpKey };
     const copy = JSON.parse(JSON.stringify(defaultData ?? {}))
     Object.assign(data, cmp);
@@ -50,7 +50,7 @@ export class World {
 
   private addToCache(entity: Entity, factoryIds: string[]) {
     for (const key in this.queryCache) {
-      if (key.split('|').every(item => factoryIds.indexOf(item) > -1 && this.queryCache[key].indexOf(entity) === -1)) {
+      if (key.split('|').every(item => factoryIds.includes(item) && this.queryCache[key].includes(entity))) {
         this.queryCache[key].push(entity)
       }
     }
@@ -61,7 +61,7 @@ export class World {
       const idx = this.queryCache[key].indexOf(entity)
       if (idx > -1) {
         if (factoryId) {
-          if (key.indexOf(factoryId) > -1) {
+          if (key.includes(factoryId)) {
             this.queryCache[key].splice(idx, 1)
           }
         }
@@ -73,7 +73,7 @@ export class World {
   }
 
   public addEntity(...components: ComponentData[]): Entity {
-    const entity = 'ent_' + (++this.entityCounter).toString()
+    const entity = (++this.entityCounter).toString()
     this.entities[entity] = {}
     this.addComponents(entity, ...components)
     return entity
@@ -90,7 +90,8 @@ export class World {
     const types = getTypes([...components] as { _type: string }[])
     this.addToCache(entity, types)
     for (const cmp of components) {
-      this.entities[entity][cmp._type] = cmp
+      // We also accept Component Factories, though it's not ideal
+      this.entities[entity][cmp._type] = typeof cmp === 'function' ? cmp() : cmp
     }
   }
 
@@ -108,7 +109,7 @@ export class World {
    * @returns The component, or null
    */
   public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
-    return this.entities[entity][factory._type] ?? null
+    return this.entities[entity][factory._type] as ComponentData<T> ?? null
   }
 
   public hasComponents<T extends ReadonlyArray<ComponentFactory>>(entity: Entity, ...factories: T): boolean {

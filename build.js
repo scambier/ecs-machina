@@ -8,6 +8,6 @@ shell.rm('-rf', distFolder)
 
 // Build typescript
 console.log('... Building TypeScript')
-shell.exec('tsc')
+shell.exec('tsc --project tsconfig.build.json')
 
 console.log('Done.')
