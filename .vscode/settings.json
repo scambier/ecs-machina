@@ -1,15 +1,10 @@
 {
 	"editor.tabSize": 2,
 	"typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
-	"tslint.exclude": [
-		"**/*.spec.ts",
-		"**/*.test.ts"
-	],
 	"editor.trimAutoWhitespace": true,
 	"files.trimTrailingWhitespace": true,
 	"editor.codeActionsOnSave": {
 		"source.organizeImports": false,
-		"source.fixAll.tslint": true
     },
     "files.autoSave": "onFocusChange",
 }
