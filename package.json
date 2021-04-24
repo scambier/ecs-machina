@@ -11,8 +11,7 @@
     "start": "tsc --watch",
     "prepack": "npm run build",
     "build": "node build.js",
-    "test": "jest --coverage --coverageReporters=lcov --coverageReporters=html",
-    "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls"
+    "test": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -35,7 +34,6 @@
   "devDependencies": {
     "@types/jest": "^26.0.22",
     "@types/node": "^14.14.41",
-    "coveralls": "^3.1.0",
     "jest": "^26.6.3",
     "shelljs": "^0.8.4",
     "ts-jest": "^26.5.5",
