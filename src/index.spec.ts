@@ -20,7 +20,7 @@ describe('The World', () => {
 
 describe('Components', () => {
   const Position = Component({ x: 5, y: 6 })
-  const Velocity = Component({ dx: 0, dy: 0 })
+  const Velocity = Component<{ dx: number, dy: number }>()
 
   let world: World
   beforeEach(() => {
@@ -33,16 +33,19 @@ describe('Components', () => {
     expect(world.getComponent(entity, Position)!.y).toEqual(6)
   })
 
-  it('have default values', () => {
-    const entity = world.addEntity(Position())
-    expect(world.getComponent(entity, Position)!.x).toEqual(5)
-    expect(world.getComponent(entity, Position)!.y).toEqual(6)
-  })
-
   it('can be added as factories', () => {
     const entity = world.addEntity(Position)
     expect(world.getComponent(entity, Position)!.x).toEqual(5)
     expect(world.getComponent(entity, Position)!.y).toEqual(6)
+  })
+
+  it('can be simple tags with no attributes', () => {
+    const Tag = Component()
+    const a = world.addEntity(Tag())
+    const b = world.addEntity()
+
+    expect(world.getComponent(a, Tag)).not.toBeNull()
+    expect(world.getComponent(b, Tag)).toBeNull()
   })
 
   it('can be added to an existing entity', () => {

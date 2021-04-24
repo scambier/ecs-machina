@@ -1,6 +1,6 @@
 {
   "name": "ecs-machina",
-  "version": "0.0.11",
+  "version": "0.1.0",
   "description": "Entity-Component-System Engine",
   "homepage": "https://github.com/scambier/ecs-machina#readme",
   "main": "dist/index.js",
@@ -9,10 +9,8 @@
   ],
   "scripts": {
     "start": "tsc --watch",
-    "vuepress": "vuepress dev docs",
     "prepack": "npm run build",
     "build": "node build.js",
-    "publish-docs": "node build-docs.js",
     "test": "jest --coverage --coverageReporters=lcov --coverageReporters=html",
     "coveralls": "jest --coverage && cat ./coverage/lcov.info | coveralls"
   },
@@ -42,8 +40,6 @@
     "shelljs": "^0.8.4",
     "ts-jest": "^26.5.5",
     "ts-loader": "^9.1.1",
-    "typedoc": "^0.20.36",
-    "typescript": "^4.2.4",
-    "vuepress": "^1.8.2"
+    "typescript": "^4.2.4"
   }
 }
