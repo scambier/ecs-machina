@@ -1,7 +1,7 @@
 language: node_js
 
 node_js:
-  - "10"
+  - "16"
 
 install:
   - npm ci
@@ -12,7 +12,7 @@ before_script:
   - ./cc-test-reporter before-build
 
 script:
-  - npm run coveralls
+  - npm run build
 
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
