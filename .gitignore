@@ -3,3 +3,4 @@ dist/
 coverage/
 docs/.vuepress/dist
 .idea/
+.history

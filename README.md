@@ -55,7 +55,7 @@ const entityB = world.addEntity(
 );
 
 // With the default values
-const entityB = world.addEntity(Position(), Velocity());
+const entityC = world.addEntity(Position(), Velocity());
 ```
 
 ### Queries & Systems

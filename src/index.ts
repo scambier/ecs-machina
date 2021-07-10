@@ -39,7 +39,6 @@ function getTypes(items: ReadonlyArray<{ _type: string }>): string[] {
   for (const item of items) {
     data.push(item._type)
   }
-  data.sort()
   return data.sort()
 }
 
