@@ -23,11 +23,9 @@ const world = new World();
 
 ### Components
 
-```ts
-/*
- * You must first declare your Components
- */
+Components must be declared through the `Component()` abstract factory. It returns a Component Factory, that can be used to create new components and to query the World.
 
+```ts
 // With explicit types
 const Position = Component<{ x: number; y: number }>();
 
@@ -54,14 +52,17 @@ const entityB = world.addEntity(
   Velocity({ x: 0, y: 1 })
 );
 
-// With the default values
-const entityC = world.addEntity(Position(), Velocity());
+// Or with the default values, if components provide them
+const entityC = world.addEntity(Position());
 ```
 
 ### Queries & Systems
 
+ECS-Machina does not have Systems, but has a simple `query()` function and a `runSystems()` helper.
+
 ```ts
-// A System is a simple function that takes the world as a parameter
+// You can create a "system" like this, a simple function that 
+// takes the whole World as a parameter.
 function movementSystem(world: World) {
   const entities = world.query(Position, Velocity)
   for (const [e, pos, vel] of entities) {
@@ -73,7 +74,7 @@ function movementSystem(world: World) {
   }
 }
 
-function attackSystem(world: World){
+function attackSystem(world: World) {
   /* ... */
 }
 
@@ -95,7 +96,7 @@ We have a strong decoupling between the World, the Components, and the Systems. 
 
 The `world.query()` function has an efficient and transparent caching system, to provide the fastest iteration speed possible.
 
-The trade-off is that adding/removing/updating entity is relatively slower, because the cache will be updated in real-time.
+The trade-off is that adding/removing/updating entity is relatively slower, because the cache needs to be updated each time.
 
 ### Strong unit tests
 

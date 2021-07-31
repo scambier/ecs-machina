@@ -19,6 +19,25 @@ describe('The World', () => {
     })
   })
 
+  describe('removeEntity', () => {
+    it('removes an entity from the world', () => {
+      const entityA = world.addEntity()
+      const entityB = world.addEntity()
+      expect(world.getEntity(entityA)).toEqual({})
+      expect(world.getEntity(entityB)).toEqual({})
+      world.removeEntity(entityA)
+      expect(world.getEntity(entityA)).toEqual(undefined)
+    })
+  })
+
+  describe('hasComponent', () => {
+    it('returns wether an entity has a component', () => {
+      const entityA = world.addEntity(Position)
+      expect(world.hasComponents(entityA, Position)).toBeTruthy()
+      expect(world.hasComponents(entityA, Velocity)).toBeFalsy()
+    })
+  })
+
   describe('query', () => {
     it('fetches a single component', () => {
       const pos = Position()
