@@ -18,7 +18,7 @@ ECS-Machina is first and foremost a TypeScript library; it's meant to be used in
 
 ```ts
 // Create a world to hold your entities and components
-const world = new World();
+const world = new World()
 ```
 
 ### Components
@@ -27,13 +27,13 @@ Components must be declared through the `Component()` abstract factory. It retur
 
 ```ts
 // With explicit types
-const Position = Component<{ x: number; y: number }>();
+const Position = Component<{ x: number; y: number }>()
 
 // With default values, and implied types
-const Velocity = Component({ dx: 0, dy: 0 }); 
+const Velocity = Component({ dx: 0, dy: 0 })
 
 // You can also declare "tag" Components that have no attributes
-const IsMonster = Component(); 
+const IsMonster = Component()
 ```
 
 ### Entities
@@ -44,16 +44,16 @@ const IsMonster = Component();
  */
 
 // Without any component
-const entityA = world.addEntity();
+const entityA = world.spawn()
 
 // With one or several components
-const entityB = world.addEntity(
+const entityB = world.spawn(
   Position({ x: 10, y: 25 }),
   Velocity({ x: 0, y: 1 })
-);
+)
 
 // Or with the default values, if components provide them
-const entityC = world.addEntity(Position());
+const entityC = world.spawn(Position())
 ```
 
 ### Queries & Systems
@@ -61,7 +61,7 @@ const entityC = world.addEntity(Position());
 ECS-Machina does not have Systems, but has a simple `query()` function and a `runSystems()` helper.
 
 ```ts
-// You can create a "system" like this, a simple function that 
+// You can create a "system" like this, a simple function that
 // takes the whole World as a parameter.
 function movementSystem(world: World) {
   const entities = world.query(Position, Velocity)
@@ -69,7 +69,7 @@ function movementSystem(world: World) {
     console.log(`Moving entity ${e}`)
 
     // Component instances are correctly typed for efficient auto-completion
-    pos.x += vel.dx 
+    pos.x += vel.dx
     pos.y += vel.dy
   }
 }

@@ -1,4 +1,4 @@
-export type Entity = string
+export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
   ? never
   : { [K in keyof T]: T[K] } /* & { _type: string }*/
@@ -28,8 +28,8 @@ export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
   const fn: ComponentFactory<T> = function (data = {} as any) {
     const cmp = { _type: cmpKey }
     const copy = JSON.parse(JSON.stringify(defaultData ?? {}))
-    Object.assign(data, cmp)
-    Object.assign(copy, data)
+    assign(data, cmp)
+    assign(copy, data)
     return copy
   }
   fn._type = cmpKey
@@ -49,7 +49,7 @@ function getTypes(items: ReadonlyArray<{ _type: string }>): string[] {
 
 export class World {
   private entityCounter = 0
-  private entities: Record<Entity, Record<string, ComponentData>> = {} // No Map in es5
+  private entities: Record<string, ComponentData>[] = []
   private queryCache: Record<string, Entity[]> = {}
 
   private addToCache(entity: Entity, factoryIds: string[]) {
@@ -59,7 +59,8 @@ export class World {
           .split("|")
           .every(
             (item) =>
-              factoryIds.includes(item) && this.queryCache[key].includes(entity)
+              factoryIds.indexOf(item) > -1 &&
+              this.queryCache[key].indexOf(entity) === -1
           )
       ) {
         this.queryCache[key].push(entity)
@@ -72,7 +73,7 @@ export class World {
       const idx = this.queryCache[key].indexOf(entity)
       if (idx > -1) {
         if (factoryId) {
-          if (key.includes(factoryId)) {
+          if (key.indexOf(factoryId) > -1) {
             this.queryCache[key].splice(idx, 1)
           }
         } else {
@@ -82,15 +83,15 @@ export class World {
     }
   }
 
-  public addEntity(...components: ComponentData[]): Entity {
-    const entity = (++this.entityCounter).toString()
+  public spawn(...components: ComponentData[]): Entity {
+    const entity = ++this.entityCounter
     this.entities[entity] = {}
     this.addComponents(entity, ...components)
     return entity
   }
 
-  public removeEntity(entity: Entity): void {
-    delete this.entities[entity]
+  public destroy(entity: Entity): void {
+    ;(this.entities[entity] as any) = undefined // Not a real delete, so we won't reuse this index
     this.removeFromCache(entity)
   }
 
@@ -102,12 +103,11 @@ export class World {
     const types = getTypes([...components] as { _type: string }[])
     this.addToCache(entity, types)
     for (const cmp of components) {
-      // We also accept Component Factories, though it's not ideal.
       this.entities[entity][cmp._type] = typeof cmp === "function" ? cmp() : cmp
     }
   }
 
-  public removeComponents(entity: Entity, ...components: { _type: string }[]) {
+  public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
     for (const cmp of components) {
       delete this.entities[entity][cmp._type]
       this.removeFromCache(entity, cmp._type)
@@ -138,45 +138,65 @@ export class World {
   }
 
   /**
-   * Returns several components of an entity
+   * Returns several components of an entity.
+   *
+   * @example world.getComponents(entity, Position, Velocity)
    * @param entity
    * @param factories
-   * @returns An array of components
+   * @returns A sorted array of components
    */
   public getComponents<T extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     ...factories: T
-  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> } {
-    const cmps = [] as ComponentData[]
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
+    return this.getComponentsArr(entity, factories)
+  }
+
+  /**
+   * Like `getComponents()`, but accepts an array of components instead of a rest parameter.
+   * Prefer this method for performances.
+   *
+   * @example world.getComponentsArr(entity, [Position, Velocity] as const)
+   * @param entity
+   * @param factories
+   * @returns A sorted array of components
+   */
+  public getComponentsArr<T extends ReadonlyArray<ComponentFactory>>(
+    entity: Entity,
+    factories: T
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
+    const cmps = [] as (ComponentData | null)[]
     for (const f of factories) {
-      cmps.push(this.getComponent(entity, f)!)
+      cmps.push(this.getComponent(entity, f))
     }
     return cmps as any
   }
 
-  public getEntity(entity: Entity): Record<string, ComponentData<any>> {
+  public getEntity(entity: Entity): Record<string, ComponentData<any>> | null {
     return this.entities[entity]
   }
 
   /**
    * Returns the entity id and its entities.<br>
    * The query results are cached, and the cache is updated with added/removed entities/components
-   * @param factories
-   * @returns
+   *
+   * @example for (const [entity, pos, vel] of world.query(Position, Velocity)) {}
+   * @param factories A list of Component factories, as a rest parameter
+   * @returns An array of entities with their queried components
    */
   public query<T extends ReadonlyArray<ComponentFactory>>(
     ...factories: T
-  ): Array<[string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
+  ): Array<[Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
     // 1) Get the entities (ids) that have all queried factories
     const entities = this.getEntities(factories)
 
     // 2) Get the queried components from their factories
     const data = []
     for (const e of entities) {
-      data.push([e, ...this.getComponents(e, ...factories)])
+      data.push([e, ...this.getComponentsArr(e, factories)])
     }
     return data as Array<
-      [string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
+      [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
     >
   }
 
@@ -190,22 +210,31 @@ export class World {
     if (this.queryCache[cacheKey]?.length >= 0)
       entities = this.queryCache[cacheKey]
     else {
-      entities = Object.keys(this.entities).filter((entity) => {
-        return types.every((type) => this.entities[entity].hasOwnProperty(type))
-      })
+      entities = Object.keys(this.entities)
+        .filter((entity) => {
+          return types.every((type) =>
+            this.entities[Number(entity)].hasOwnProperty(type)
+          )
+        })
+        .map((e) => Number(e))
+      this.queryCache[cacheKey] = entities
     }
-    this.queryCache[cacheKey] = entities
 
     return entities
   }
+}
 
-  /**
-   * Executes systems on this world
-   * @param systems
-   */
-  public runSystems(...systems: Array<(world: World) => void>) {
-    for (const system of systems) {
-      system(this)
-    }
-  }
+/**
+ * Object.assign polyfill for ES5 compatibility
+ *
+ * @param dest
+ * @param source
+ * @returns
+ */
+function assign<T, U>(dest: T, source: U): T & U {
+  if ((Object as any).assign) return (Object as any).assign(dest, source)
+  Object.keys(source as any).forEach(
+    (i) => ((dest as any)[i] = (source as any)[i])
+  )
+  return dest as T & U
 }
