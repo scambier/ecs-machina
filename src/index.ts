@@ -1,11 +1,16 @@
 export type Entity = string
-export type ComponentData<T = any> = T extends ComponentFactory ? never : { [K in keyof T]: T[K] }/* & { _type: string }*/
-export type Inner<X> = X extends ComponentFactory<infer I> ? I : never;
+export type ComponentData<T = any> = T extends ComponentFactory
+  ? never
+  : { [K in keyof T]: T[K] } /* & { _type: string }*/
+export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 /**
  * The Component Factory, used to generate components of the same type
  */
-export type ComponentFactory<T = any> = { (data?: T): ComponentData<T>; _type: string }
+export type ComponentFactory<T = any> = {
+  (data?: T): ComponentData<T>
+  _type: string
+}
 
 type ComponentId = string
 type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
@@ -20,11 +25,11 @@ let componentFactoryId = 0
 export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
   const cmpKey: ComponentId = (++componentFactoryId).toString()
 
-  const fn: ComponentFactory<T> = function(data = {} as any) {
-    const cmp = { _type: cmpKey };
+  const fn: ComponentFactory<T> = function (data = {} as any) {
+    const cmp = { _type: cmpKey }
     const copy = JSON.parse(JSON.stringify(defaultData ?? {}))
-    Object.assign(data, cmp);
-    Object.assign(copy, data);
+    Object.assign(data, cmp)
+    Object.assign(copy, data)
     return copy
   }
   fn._type = cmpKey
@@ -49,7 +54,14 @@ export class World {
 
   private addToCache(entity: Entity, factoryIds: string[]) {
     for (const key in this.queryCache) {
-      if (key.split('|').every(item => factoryIds.includes(item) && this.queryCache[key].includes(entity))) {
+      if (
+        key
+          .split("|")
+          .every(
+            (item) =>
+              factoryIds.includes(item) && this.queryCache[key].includes(entity)
+          )
+      ) {
         this.queryCache[key].push(entity)
       }
     }
@@ -63,8 +75,7 @@ export class World {
           if (key.includes(factoryId)) {
             this.queryCache[key].splice(idx, 1)
           }
-        }
-        else {
+        } else {
           this.queryCache[key].splice(idx, 1)
         }
       }
@@ -84,13 +95,15 @@ export class World {
   }
 
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
-    const registered = Object.keys(this.entities[entity]).map(k => this.entities[entity][k])
+    const registered = Object.keys(this.entities[entity]).map(
+      (k) => this.entities[entity][k]
+    )
     const components = [...newComponents, ...registered]
     const types = getTypes([...components] as { _type: string }[])
     this.addToCache(entity, types)
     for (const cmp of components) {
-      // We also accept Component Factories, though it's not ideal
-      this.entities[entity][cmp._type] = typeof cmp === 'function' ? cmp() : cmp
+      // We also accept Component Factories, though it's not ideal.
+      this.entities[entity][cmp._type] = typeof cmp === "function" ? cmp() : cmp
     }
   }
 
@@ -107,11 +120,17 @@ export class World {
    * @param factory
    * @returns The component, or null
    */
-  public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
-    return this.entities[entity][factory._type] as ComponentData<T> ?? null
+  public getComponent<T>(
+    entity: Entity,
+    factory: ComponentFactory<T>
+  ): ComponentData<T> | null {
+    return (this.entities[entity][factory._type] as ComponentData<T>) ?? null
   }
 
-  public hasComponents<T extends ReadonlyArray<ComponentFactory>>(entity: Entity, ...factories: T): boolean {
+  public hasComponents<T extends ReadonlyArray<ComponentFactory>>(
+    entity: Entity,
+    ...factories: T
+  ): boolean {
     for (const f of factories) {
       if (!this.getComponent(entity, f)) return false
     }
@@ -124,7 +143,10 @@ export class World {
    * @param factories
    * @returns An array of components
    */
-  public getComponents<T extends ReadonlyArray<ComponentFactory>>(entity: Entity, ...factories: T): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> } {
+  public getComponents<T extends ReadonlyArray<ComponentFactory>>(
+    entity: Entity,
+    ...factories: T
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> } {
     const cmps = [] as ComponentData[]
     for (const f of factories) {
       cmps.push(this.getComponent(entity, f)!)
@@ -142,7 +164,9 @@ export class World {
    * @param factories
    * @returns
    */
-  public query<T extends ReadonlyArray<ComponentFactory>>(...factories: T): Array<[string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
+  public query<T extends ReadonlyArray<ComponentFactory>>(
+    ...factories: T
+  ): Array<[string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
     // 1) Get the entities (ids) that have all queried factories
     const entities = this.getEntities(factories)
 
@@ -151,18 +175,23 @@ export class World {
     for (const e of entities) {
       data.push([e, ...this.getComponents(e, ...factories)])
     }
-    return data as Array<[string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]>
+    return data as Array<
+      [string, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
+    >
   }
 
-  public getEntities<T extends ReadonlyArray<ComponentFactory>>(factories: T): Entity[] {
+  public getEntities<T extends ReadonlyArray<ComponentFactory>>(
+    factories: T
+  ): Entity[] {
     const types = getTypes([...factories])
-    const cacheKey = types.join('|')
+    const cacheKey = types.join("|")
     let entities: Entity[] = []
 
-    if (this.queryCache[cacheKey]?.length >= 0) entities = this.queryCache[cacheKey]
+    if (this.queryCache[cacheKey]?.length >= 0)
+      entities = this.queryCache[cacheKey]
     else {
       entities = Object.keys(this.entities).filter((entity) => {
-        return types.every(type => this.entities[entity].hasOwnProperty(type))
+        return types.every((type) => this.entities[entity].hasOwnProperty(type))
       })
     }
     this.queryCache[cacheKey] = entities
@@ -179,5 +208,4 @@ export class World {
       system(this)
     }
   }
-
 }

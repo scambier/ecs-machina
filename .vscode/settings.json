@@ -1,10 +1,14 @@
 {
-	"editor.tabSize": 2,
-	"typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
-	"editor.trimAutoWhitespace": true,
-	"files.trimTrailingWhitespace": true,
-	"editor.codeActionsOnSave": {
-		"source.organizeImports": false,
-    },
-    "files.autoSave": "onFocusChange",
+  "editor.tabSize": 2,
+  "typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": false,
+  },
+  "files.autoSave": "onFocusChange",
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
 }
