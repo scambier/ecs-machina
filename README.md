@@ -4,7 +4,7 @@
 
 # ECS-Machina
 
-> A TypeScript Entity-Component-System Library
+> A zero-dependency TypeScript Entity-Component-System Library
 
 ## Installation
 
@@ -13,6 +13,8 @@
 ## Documentation
 
 ECS-Machina is first and foremost a TypeScript library; it's meant to be used in TypeScript projects to take full advantage of its typing system.
+
+I created this library to be used in TIC-80 projects, and so it has 0 dependency and is ES5-compatible. You can "install" it by copy-pasting the whole index.ts file in your own project.
 
 ### World
 
@@ -101,3 +103,7 @@ The trade-off is that adding/removing/updating entity is relatively slower, beca
 ### Strong unit tests
 
 This is a work-in-progress (as ECS-Machina itself is under development), but we aim for 100% of code coverage.
+
+### Credits
+
+This library was inspired by [PECS](https://github.com/jesstelford/pecs), a PICO-8 ECS library.
