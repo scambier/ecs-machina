@@ -60,7 +60,7 @@ const entityC = world.spawn(Position())
 
 ### Queries & Systems
 
-ECS-Machina does not have Systems, but has a simple `query()` function and a `runSystems()` helper.
+ECS-Machina does not have Systems, but has a simple `query()` function helper.
 
 ```ts
 // You can create a "system" like this, a simple function that
@@ -80,11 +80,16 @@ function attackSystem(world: World) {
   /* ... */
 }
 
-// Call `runSystems` to execute Systems within your World context
-world.runSystems(movementSystem, attackSystem)
+// Execute your systems against your world
+movementSystem(world)
+attackSystem(world)
 ```
 
 ## Philosophy and goals
+
+### ES5 compatible
+
+Since ECS-Machina was created to run on TIC-80, it must be compatible with the Duktape engine, which is mostly ES5. Unfortunately, this means important performance tradeoffs. If you _don't_ need ES5 compatibility, there are [several ECS libraries](https://github.com/noctjs/ecs-benchmark) that will serve you better.
 
 ### TypeScript First
 
@@ -93,12 +98,6 @@ Games built with an ECS engine have a lot of different components and systems. S
 ### Code reusability
 
 We have a strong decoupling between the World, the Components, and the Systems. The goal is to let you write code that you can truly reuse throughout your projects.
-
-### Fast systems
-
-The `world.query()` function has an efficient and transparent caching system, to provide the fastest iteration speed possible.
-
-The trade-off is that adding/removing/updating entity is relatively slower, because the cache needs to be updated each time.
 
 ### Strong unit tests
 
