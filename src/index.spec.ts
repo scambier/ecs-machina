@@ -13,7 +13,7 @@ describe("The World", () => {
   describe("spawn", () => {
     it("creates an entity", () => {
       const entity = world.spawn()
-      expect(entity).toEqual(1)
+      expect(entity).toEqual(0)
     })
   })
 
@@ -21,8 +21,8 @@ describe("The World", () => {
     it("removes an entity from the world", () => {
       const entityA = world.spawn()
       const entityB = world.spawn()
-      expect(world.getEntity(entityA)).toEqual({})
-      expect(world.getEntity(entityB)).toEqual({})
+      expect(world.getEntity(entityA)).toEqual([])
+      expect(world.getEntity(entityB)).toEqual([])
       world.destroy(entityA)
       expect(world.getEntity(entityA)).toEqual(undefined)
     })
@@ -130,7 +130,24 @@ describe("Components", () => {
   })
 
   it("return their own key when displayed as strings", () => {
-    expect(Position.toString()).toEqual("4")
+    expect(Position.toString()).toEqual("3")
+  })
+
+  it("can be modified in queries", () => {
+    const entity = world.spawn(
+      Position({ x: 0, y: 0 }),
+      Velocity({ dx: 1, dy: 2 })
+    )
+
+    for (const [e, pos, vel] of world.query(Position, Velocity)) {
+      pos.x += vel.dx
+      pos.y += vel.dy
+    }
+
+    const pos = world.getComponent(entity, Position)!
+
+    expect(pos.x).toEqual(1)
+    expect(pos.y).toEqual(2)
   })
 })
 
