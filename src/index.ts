@@ -48,28 +48,30 @@ export class World {
 
   private addToCache(entity: Entity, factoryIds: ComponentId[]) {
     for (const key in this.queryCache) {
+      const cache = this.queryCache[key]
       if (
-        this.queryCache[key].types.every(
+        cache.types.every(
           (item) =>
             factoryIds.indexOf(item) > -1 &&
-            this.queryCache[key].entities.indexOf(entity) === -1
+            cache.entities.indexOf(entity) === -1
         )
       ) {
-        this.queryCache[key].entities.push(entity)
+        cache.entities.push(entity)
       }
     }
   }
 
   private removeFromCache(entity: Entity, factoryId?: ComponentId) {
     for (const key in this.queryCache) {
-      const idx = this.queryCache[key].entities.indexOf(entity)
+      const cache = this.queryCache[key]
+      const idx = cache.entities.indexOf(entity)
       if (idx > -1) {
         if (factoryId) {
-          if (this.queryCache[key].types.indexOf(factoryId) > -1) {
-            this.queryCache[key].entities.splice(idx, 1)
+          if (cache.types.indexOf(factoryId) > -1) {
+            cache.entities.splice(idx, 1)
           }
         } else {
-          this.queryCache[key].entities.splice(idx, 1)
+          cache.entities.splice(idx, 1)
         }
       }
     }
