@@ -1,7 +1,7 @@
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
   ? never
-  : { [K in keyof T]: T[K] }
+  : { [K in keyof T]: T[K] } & { _type: ComponentId }
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
@@ -15,99 +15,50 @@ export type ComponentFactory<T = any> = {
   _type: ComponentId
 }
 
-let componentFactoryId = -1
-
-/**
- * An abstract Component Factory, used to define a new type of Component.<br>
- * This pattern is inspired by https://github.com/jesstelford/pecs
- * @returns The Component Factory
- */
-export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-  const cmpKey: ComponentId = ++componentFactoryId
-
-  const fn: ComponentFactory<T> = function (data = {} as any) {
-    ;(data as any)._type = cmpKey
-    const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-    assign(copy, data)
-    return copy
-  }
-  fn._type = cmpKey
-  fn.toString = () => {
-    return fn._type.toString()
-  }
-  return fn
-}
-
 export class World {
-  private entityCounter = -1
-  private entities: Array<ComponentData[]> = new Array(5000)
-  private queryCache: Record<
-    number,
-    { types: ComponentId[]; entities: Entity[] }
-  > = {}
+  private entityCounter = 0
+  private componentFactoryId = 0
 
-  private addToCache(entity: Entity, factoryIds: ComponentId[]) {
-    for (const key in this.queryCache) {
-      const cache = this.queryCache[key]
-      if (
-        cache.types.every(
-          (item) =>
-            factoryIds.indexOf(item) > -1 &&
-            cache.entities.indexOf(entity) === -1
-        )
-      ) {
-        cache.entities.push(entity)
-      }
-    }
-  }
+  private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
 
-  private removeFromCache(entity: Entity, factoryId?: ComponentId) {
-    for (const key in this.queryCache) {
-      const cache = this.queryCache[key]
-      const idx = cache.entities.indexOf(entity)
-      if (idx > -1) {
-        if (factoryId) {
-          if (cache.types.indexOf(factoryId) > -1) {
-            cache.entities.splice(idx, 1)
-          }
-        } else {
-          cache.entities.splice(idx, 1)
-        }
-      }
+  public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
+    const cmpKey: ComponentId = ++this.componentFactoryId
+    this.data[cmpKey] = {}
+
+    const fn: ComponentFactory<T> = function (data = {} as any) {
+      ;(data as any)._type = cmpKey
+      const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
+      assign(copy, data)
+      return copy
     }
+    fn._type = cmpKey
+    fn.toString = () => {
+      return fn._type.toString()
+    }
+    return fn
   }
 
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
-    this.entities[entity] = []
     this.addComponents(entity, ...components)
     return entity
   }
 
   public destroy(entity: Entity): void {
-    ;(this.entities[entity] as any) = undefined // Not a real delete, so we won't reuse this index
-    this.removeFromCache(entity)
+    for (const cmpId in this.data) {
+      delete this.data[cmpId][entity]
+    }
   }
 
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
-    if (!this.entities[entity])
-      throw new Error(`Entity ${entity} does not exist`)
-
-    const registered = Object.keys(this.entities[entity]).map(
-      (k) => this.entities[entity][Number(k)]
-    )
-    const components = [...newComponents, ...registered]
-    const types = getTypes([...components] as { _type: ComponentId }[])
-    this.addToCache(entity, types)
-    for (const cmp of components) {
-      this.entities[entity][cmp._type] = typeof cmp === "function" ? cmp() : cmp
+    for (const cmp of newComponents) {
+      this.data[cmp._type][entity] = cmp
     }
   }
 
   public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
     for (const cmp of components) {
-      delete this.entities[entity][cmp._type]
-      this.removeFromCache(entity, cmp._type)
+      delete this.data[cmp._type][entity]
     }
   }
 
@@ -121,17 +72,7 @@ export class World {
     entity: Entity,
     factory: ComponentFactory<T>
   ): ComponentData<T> | null {
-    return (this.entities[entity][factory._type] as ComponentData<T>) ?? null
-  }
-
-  public hasComponents<T extends ReadonlyArray<ComponentFactory>>(
-    entity: Entity,
-    ...factories: T
-  ): boolean {
-    for (const f of factories) {
-      if (!this.getComponent(entity, f)) return false
-    }
-    return true
+    return (this.data[factory._type][entity] as ComponentData<T>) ?? null
   }
 
   /**
@@ -162,17 +103,12 @@ export class World {
     entity: Entity,
     factories: T
   ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
-    const cmps = new Array(factories.length) as (ComponentData | null)[]
-    for (let i = 0; i < factories.length; ++i) {
+    const l = factories.length
+    const cmps = new Array(l) as (ComponentData | null)[]
+    for (let i = 0; i < l; ++i) {
       cmps[i] = this.getComponent(entity, factories[i])
     }
     return cmps as any
-  }
-
-  public getEntity(
-    entity: Entity
-  ): Record<ComponentId, ComponentData<any>> | null {
-    return this.entities[entity]
   }
 
   /**
@@ -194,8 +130,9 @@ export class World {
     const data = new Array(l)
     for (let i = 0; i < l; ++i) {
       const e = entities[i]
-      data[i] = [e, ...this.getComponentsArr(e, factories)]
+      data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
     }
+
     return data as Array<
       [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
     >
@@ -204,23 +141,33 @@ export class World {
   public getEntities<T extends ReadonlyArray<ComponentFactory>>(
     factories: T
   ): Entity[] {
-    const types = getTypes(factories)
-    const cacheKey = hashCode(types)
-
-    if (this.queryCache[cacheKey]) {
-      return this.queryCache[cacheKey].entities
-    } else {
-      const entities = []
-      let a = -1
-      for (let e = 0; e <= this.entityCounter; ++e) {
-        if (types.every((type) => !!this.entities[e]?.[type])) {
-          entities[++a] = e
-        }
-      }
-      this.queryCache[cacheKey] = { entities, types }
-      return entities
+    let entities = Object.keys(this.data[factories[0]._type])
+    const l = factories.length
+    for (let i = 1; i < l; ++i) {
+      entities = intersection(
+        entities,
+        Object.keys(this.data[factories[i]._type])
+      )
     }
+
+    return entities.map((e) => Number(e))
   }
+
+  private getComponentsArrUnsafe<T extends ReadonlyArray<ComponentFactory>>(
+    entity: Entity,
+    factories: T
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
+    const l = factories.length
+    const cmps = new Array(l) as (ComponentData | null)[]
+    for (let i = 0; i < l; ++i) {
+      cmps[i] = this.data[factories[i]._type][entity]
+    }
+    return cmps as any
+  }
+}
+
+function intersection<T>(array1: T[], array2: T[]): T[] {
+  return array1.filter((value) => array2.indexOf(value) > -1)
 }
 
 /**
@@ -236,23 +183,4 @@ function assign<T, U>(dest: T, source: U): T & U {
     (i) => ((dest as any)[i] = (source as any)[i])
   )
   return dest as T & U
-}
-
-function getTypes(items: ReadonlyArray<{ _type: ComponentId }>): ComponentId[] {
-  const l = items.length
-  const data: ComponentId[] = new Array(l)
-  for (let i = 0; i < l; ++i) {
-    data[i] = items[i]._type
-  }
-  return data
-}
-
-function hashCode(values: number[]) {
-  let result = 1
-  const l = values.length
-  for (let i = 0; i < l; ++i) {
-    const elem = values[i]
-    result = 31 * result + elem
-  }
-  return result
 }
