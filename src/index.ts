@@ -142,13 +142,14 @@ export class World {
     factories: T
   ): Entity[] {
     const arrOfKeys = []
-    for (let i = 0; i < factories.length; ++i) {
+    let l = factories.length
+    for (let i = 0; i < l; ++i) {
       arrOfKeys.push(Object.keys(this.data[factories[i]._type]))
     }
     arrOfKeys.sort((a, b) => a.length - b.length)
 
     let entities = arrOfKeys[0]
-    const l = arrOfKeys.length
+    l = arrOfKeys.length
     for (let i = 1; i < l; ++i) {
       entities = intersection(entities, arrOfKeys[i])
     }
@@ -176,20 +177,26 @@ export class World {
  * @returns
  */
 export function intersection<T>(array1: T[], array2: T[]): T[] {
-  const a = array1.slice(0)
-  const b = array2.slice(0)
-  var result: T[] = []
-  while (a.length > 0 && b.length > 0) {
-    if (a[0] < b[0]) {
-      a.shift()
-    } else if (a[0] > b[0]) {
-      b.shift()
+  // Don't destroy the original arrays
+  const a = array1.slice(0).sort()
+  const b = array2.slice(0).sort()
+  const result: T[] = []
+  let aLast = a.length - 1
+  let bLast = b.length - 1
+  while (aLast >= 0 && bLast >= 0) {
+    if (a[aLast] > b[bLast]) {
+      a.pop()
+      --aLast
+    } else if (a[aLast] < b[bLast]) {
+      b.pop()
+      --bLast
     } /* they're equal */ else {
-      result.push(a.shift()!)
-      b.shift()
+      result.push(a.pop()!)
+      b.pop()
+      --aLast
+      --bLast
     }
   }
-
   return result
 }
 
@@ -206,53 +213,4 @@ function assign<T, U>(dest: T, source: U): T & U {
     (i) => ((dest as any)[i] = (source as any)[i])
   )
   return dest as T & U
-}
-
-class Set {
-  private _data: Record<any, boolean> = {}
-  public constructor(items: any[]) {
-    this.addItems(items)
-  }
-
-  public addItem(value: any) {
-    this._data[value] = true
-    return this
-  }
-
-  public addItems(values: any[]) {
-    for (var i = 0; i < values.length; i++) {
-      this.addItem(values[i])
-    }
-    return this
-  }
-  public removeItem(value: any) {
-    delete this._data[value]
-    return this
-  }
-  public removeItems(values: any[]) {
-    for (var i = 0; i < values.length; i++) {
-      this.removeItem(values[i])
-    }
-    return this
-  }
-
-  public contains(value: any) {
-    return !!this._data[value]
-  }
-
-  public reset() {
-    this._data = {}
-    return this
-  }
-
-  public data() {
-    return Object.keys(this._data)
-  }
-
-  public each(callback: (o: any) => void) {
-    var data = this.data()
-    for (var i = 0; i < data.length; i++) {
-      callback(data[i])
-    }
-  }
 }
