@@ -1,13 +1,15 @@
-import { Component, Entity, World } from "./index"
+import { ComponentFactory, Entity, intersection, World } from "./index"
 
 describe("The World", () => {
-  const Position = Component({ x: 5, y: 6 })
-  const Velocity = Component<{ dx: number; dy: number }>()
-  const Tag = Component()
-
   let world: World
+  let Position: ComponentFactory<{ x: number; y: number }>
+  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+  let Tag: ComponentFactory
   beforeEach(() => {
     world = new World()
+    Position = world.Component({ x: 5, y: 6 })
+    Velocity = world.Component<{ dx: number; dy: number }>()
+    Tag = world.Component()
   })
 
   describe("spawn", () => {
@@ -19,20 +21,19 @@ describe("The World", () => {
 
   describe("destroy", () => {
     it("removes an entity from the world", () => {
-      const entityA = world.spawn()
-      const entityB = world.spawn()
-      expect(world.getEntity(entityA)).toEqual([])
-      expect(world.getEntity(entityB)).toEqual([])
+      const entityA = world.spawn(Tag())
+      expect(world.getComponent(entityA, Tag)).toBeTruthy()
+
       world.destroy(entityA)
-      expect(world.getEntity(entityA)).toEqual(undefined)
+      expect(world.getComponent(entityA, Tag)).toBeNull()
     })
   })
 
   describe("hasComponent", () => {
     it("returns wether an entity has a component", () => {
       const entityA = world.spawn(Position)
-      expect(world.hasComponents(entityA, Position)).toBeTruthy()
-      expect(world.hasComponents(entityA, Velocity)).toBeFalsy()
+      expect(world.getComponent(entityA, Position)).toBeTruthy()
+      expect(world.getComponent(entityA, Velocity)).toBeFalsy()
     })
   })
 
@@ -86,12 +87,14 @@ describe("The World", () => {
 })
 
 describe("Components", () => {
-  const Position = Component({ x: 5, y: 6 })
-  const Velocity = Component<{ dx: number; dy: number }>()
-
   let world: World
+  let Position: ComponentFactory<{ x: number; y: number }>
+  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+
   beforeEach(() => {
     world = new World()
+    Position = world.Component({ x: 5, y: 6 })
+    Velocity = world.Component<{ dx: number; dy: number }>()
   })
 
   it("have default values", () => {
@@ -107,7 +110,7 @@ describe("Components", () => {
   })
 
   it("can be simple tags with no attributes", () => {
-    const Tag = Component()
+    const Tag = world.Component()
     const a = world.spawn(Tag())
     const b = world.spawn()
 
@@ -130,7 +133,8 @@ describe("Components", () => {
   })
 
   it("return their own key when displayed as strings", () => {
-    expect(Position.toString()).toEqual("3")
+    expect(Position.toString()).toEqual("0")
+    expect(Velocity.toString()).toEqual("1")
   })
 
   it("can be modified in queries", () => {
@@ -152,13 +156,15 @@ describe("Components", () => {
 })
 
 describe("The cache system", () => {
-  const Position = Component<{ x: Number; y: number }>()
-  const Velocity = Component<{ dx: number; dy: number }>()
-
   let world: World
+  let Position: ComponentFactory<{ x: number; y: number }>
+  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+
   let entityA: Entity
   beforeEach(() => {
     world = new World()
+    Position = world.Component<{ x: number; y: number }>()
+    Velocity = world.Component<{ dx: number; dy: number }>()
     entityA = world.spawn(Position({ x: 1, y: 1 }))
     world.spawn(Velocity({ dx: 1, dy: 1 }))
   })
@@ -167,5 +173,16 @@ describe("The cache system", () => {
     world.query(Position)
     let [e] = world.query(Position)[0]
     expect(e).toEqual(entityA)
+  })
+})
+
+describe("intersection", () => {
+  it("works", () => {
+    expect(intersection([1, 2, 3], [4, 5, 6])).toEqual([])
+    expect(intersection([1, 2, 3], [3, 4, 5])).toEqual([3])
+    expect(intersection([1, 2, 3], [1, 2, 3])).toEqual([1, 2, 3])
+    expect(intersection([1, 2, 3, 4].sort(), [0, 3, 2, 5].sort())).toEqual([
+      2, 3,
+    ])
   })
 })

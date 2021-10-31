@@ -1,7 +1,7 @@
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
   ? never
-  : { [K in keyof T]: T[K] } & { _type: ComponentId }
+  : { [K in keyof T]: T[K] } /*& { _type: ComponentId }*/
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
@@ -16,8 +16,8 @@ export type ComponentFactory<T = any> = {
 }
 
 export class World {
-  private entityCounter = 0
-  private componentFactoryId = 0
+  private entityCounter = -1
+  private componentFactoryId = -1
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
 
@@ -51,8 +51,8 @@ export class World {
   }
 
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
-    for (const cmp of newComponents) {
-      this.data[cmp._type][entity] = cmp
+    for (let cmp of newComponents) {
+      this.data[cmp._type][entity] = typeof cmp === "function" ? cmp() : cmp
     }
   }
 
@@ -141,13 +141,16 @@ export class World {
   public getEntities<T extends ReadonlyArray<ComponentFactory>>(
     factories: T
   ): Entity[] {
-    let entities = Object.keys(this.data[factories[0]._type])
-    const l = factories.length
+    const arrOfKeys = []
+    for (let i = 0; i < factories.length; ++i) {
+      arrOfKeys.push(Object.keys(this.data[factories[i]._type]))
+    }
+    arrOfKeys.sort((a, b) => a.length - b.length)
+
+    let entities = arrOfKeys[0]
+    const l = arrOfKeys.length
     for (let i = 1; i < l; ++i) {
-      entities = intersection(
-        entities,
-        Object.keys(this.data[factories[i]._type])
-      )
+      entities = intersection(entities, arrOfKeys[i])
     }
 
     return entities.map((e) => Number(e))
@@ -166,8 +169,28 @@ export class World {
   }
 }
 
-function intersection<T>(array1: T[], array2: T[]): T[] {
-  return array1.filter((value) => array2.indexOf(value) > -1)
+/**
+ * Fast iteration algorithm. Only works on sorted arrays.
+ * @param array1
+ * @param array2
+ * @returns
+ */
+export function intersection<T>(array1: T[], array2: T[]): T[] {
+  const a = array1.slice(0)
+  const b = array2.slice(0)
+  var result: T[] = []
+  while (a.length > 0 && b.length > 0) {
+    if (a[0] < b[0]) {
+      a.shift()
+    } else if (a[0] > b[0]) {
+      b.shift()
+    } /* they're equal */ else {
+      result.push(a.shift()!)
+      b.shift()
+    }
+  }
+
+  return result
 }
 
 /**
@@ -183,4 +206,53 @@ function assign<T, U>(dest: T, source: U): T & U {
     (i) => ((dest as any)[i] = (source as any)[i])
   )
   return dest as T & U
+}
+
+class Set {
+  private _data: Record<any, boolean> = {}
+  public constructor(items: any[]) {
+    this.addItems(items)
+  }
+
+  public addItem(value: any) {
+    this._data[value] = true
+    return this
+  }
+
+  public addItems(values: any[]) {
+    for (var i = 0; i < values.length; i++) {
+      this.addItem(values[i])
+    }
+    return this
+  }
+  public removeItem(value: any) {
+    delete this._data[value]
+    return this
+  }
+  public removeItems(values: any[]) {
+    for (var i = 0; i < values.length; i++) {
+      this.removeItem(values[i])
+    }
+    return this
+  }
+
+  public contains(value: any) {
+    return !!this._data[value]
+  }
+
+  public reset() {
+    this._data = {}
+    return this
+  }
+
+  public data() {
+    return Object.keys(this._data)
+  }
+
+  public each(callback: (o: any) => void) {
+    var data = this.data()
+    for (var i = 0; i < data.length; i++) {
+      callback(data[i])
+    }
+  }
 }
