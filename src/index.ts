@@ -20,6 +20,7 @@ export class World {
   private componentFactoryId = -1
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
+  private queryCache: Record<string, any> = {}
 
   public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
     const cmpKey: ComponentId = ++this.componentFactoryId
@@ -38,6 +39,19 @@ export class World {
     return fn
   }
 
+  private cleanCache(factories: ComponentId[]) {
+    // log('clean ' + factories)
+    for (const cmpId of factories) {
+      for (const key in this.queryCache) {
+        const split = key.split('-')
+        if (split.indexOf(cmpId.toString()) > -1) {
+          // log('bust cache for ' + key)
+          delete this.queryCache[key]
+        }
+      }
+    }
+  }
+
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
     this.addComponents(entity, ...components)
@@ -45,18 +59,24 @@ export class World {
   }
 
   public destroy(entity: Entity): void {
+    // log('destroy')
     for (const cmpId in this.data) {
+      this.cleanCache([Number(cmpId)])
       delete this.data[cmpId][entity]
     }
   }
 
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
+    // log('addcmp')
+    this.cleanCache(newComponents.map(c => c._type))
     for (let cmp of newComponents) {
-      this.data[cmp._type][entity] = typeof cmp === "function" ? cmp() : cmp
+      this.data[cmp._type][entity] = typeof cmp === 'function' ? cmp() : cmp
     }
   }
 
   public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
+    // log('remove')
+    this.cleanCache(components.map(c => c._type))
     for (const cmp of components) {
       delete this.data[cmp._type][entity]
     }
@@ -78,28 +98,12 @@ export class World {
   /**
    * Returns several components of an entity.
    *
-   * @example world.getComponents(entity, Position, Velocity)
+   * @example world.getComponents(entity, [Position, Velocity])
    * @param entity
    * @param factories
    * @returns A sorted array of components
    */
-  public getComponents<T extends ReadonlyArray<ComponentFactory>>(
-    entity: Entity,
-    ...factories: T
-  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
-    return this.getComponentsArr(entity, factories)
-  }
-
-  /**
-   * Like `getComponents()`, but accepts an array of components instead of a rest parameter.
-   * Prefer this method for performances.
-   *
-   * @example world.getComponentsArr(entity, [Position, Velocity] as const)
-   * @param entity
-   * @param factories
-   * @returns A sorted array of components
-   */
-  public getComponentsArr<T extends ReadonlyArray<ComponentFactory>>(
+  public getComponents<const T extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: T
   ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
@@ -115,13 +119,20 @@ export class World {
    * Returns the entity id and its entities.<br>
    * The query results are cached, and the cache is updated with added/removed entities/components
    *
-   * @example for (const [entity, pos, vel] of world.query(Position, Velocity)) {}
-   * @param factories A list of Component factories, as a rest parameter
-   * @returns An array of entities with their queried components
+   * @example world.queryArr([Position, Rendering] as const)
+   * @param factories
+   * @returns
    */
-  public query<T extends ReadonlyArray<ComponentFactory>>(
-    ...factories: T
+  public query<const T extends ReadonlyArray<ComponentFactory>>(
+    factories: T
   ): Array<[Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
+    const cacheKey = factories.map(f => f._type).join('-')
+    const cache = this.queryCache[cacheKey]
+    if (cache)
+      return cache as Array<
+        [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
+      >
+
     // 1) Get the entities (ids) that have all queried factories
     const entities = this.getEntities(factories)
 
@@ -133,6 +144,7 @@ export class World {
       data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
     }
 
+    this.queryCache[cacheKey] = data
     return data as Array<
       [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
     >
@@ -148,13 +160,13 @@ export class World {
     }
     arrOfKeys.sort((a, b) => a.length - b.length)
 
-    let entities = arrOfKeys[0]
+    let entities = arrOfKeys[0].sort()
     l = arrOfKeys.length
     for (let i = 1; i < l; ++i) {
-      entities = intersection(entities, arrOfKeys[i])
+      entities = intersection(entities.sort(), arrOfKeys[i].sort())
     }
 
-    return entities.map((e) => Number(e))
+    return entities.map(e => Number(e))
   }
 
   private getComponentsArrUnsafe<T extends ReadonlyArray<ComponentFactory>>(
@@ -210,7 +222,7 @@ export function intersection<T>(array1: T[], array2: T[]): T[] {
 function assign<T, U>(dest: T, source: U): T & U {
   if ((Object as any).assign) return (Object as any).assign(dest, source)
   Object.keys(source as any).forEach(
-    (i) => ((dest as any)[i] = (source as any)[i])
+    i => ((dest as any)[i] = (source as any)[i])
   )
   return dest as T & U
 }

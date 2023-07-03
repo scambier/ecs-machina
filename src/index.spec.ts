@@ -1,6 +1,6 @@
-import { ComponentFactory, Entity, intersection, World } from "./index"
+import { ComponentFactory, Entity, intersection, World } from './index'
 
-describe("The World", () => {
+describe('The World', () => {
   let world: World
   let Position: ComponentFactory<{ x: number; y: number }>
   let Velocity: ComponentFactory<{ dx: number; dy: number }>
@@ -12,15 +12,15 @@ describe("The World", () => {
     Tag = world.Component()
   })
 
-  describe("spawn", () => {
-    it("creates an entity", () => {
+  describe('spawn', () => {
+    it('creates an entity', () => {
       const entity = world.spawn()
       expect(entity).toEqual(0)
     })
   })
 
-  describe("destroy", () => {
-    it("removes an entity from the world", () => {
+  describe('destroy', () => {
+    it('removes an entity from the world', () => {
       const entityA = world.spawn(Tag())
       expect(world.getComponent(entityA, Tag)).toBeTruthy()
 
@@ -29,64 +29,64 @@ describe("The World", () => {
     })
   })
 
-  describe("hasComponent", () => {
-    it("returns wether an entity has a component", () => {
+  describe('hasComponent', () => {
+    it('returns wether an entity has a component', () => {
       const entityA = world.spawn(Position)
       expect(world.getComponent(entityA, Position)).toBeTruthy()
       expect(world.getComponent(entityA, Velocity)).toBeFalsy()
     })
   })
 
-  describe("query", () => {
-    it("fetches a single component", () => {
+  describe('query', () => {
+    it('fetches a single component', () => {
       const pos = Position()
       const entity = world.spawn(pos)
-      const result = world.query(Position)[0]
+      const result = world.query([Position])[0]
 
       expect(entity).toEqual(result[0])
       expect(pos).toEqual(result[1])
     })
 
-    it("fetches multiple components", () => {
+    it('fetches multiple components', () => {
       const pos = Position()
       const velocity = Velocity()
       const entity = world.spawn(pos, velocity)
-      const result = world.query(Velocity, Position)[0]
+      const result = world.query([Velocity, Position])[0]
 
       expect(entity).toEqual(result[0])
       expect(velocity).toEqual(result[1])
       expect(pos).toEqual(result[2])
     })
 
-    it("fetches multiple components in a different order", () => {
+    it('fetches multiple components in a different order', () => {
       const pos = Position()
       const velocity = Velocity()
       const entity = world.spawn(pos, velocity)
-      const result = world.query(Position, Velocity)[0]
+      const result = world.query([Position, Velocity])[0]
 
       expect(entity).toEqual(result[0])
       expect(pos).toEqual(result[1])
       expect(velocity).toEqual(result[2])
     })
 
-    it("fetches components after the entity has been modified", () => {
+    it('fetches components after the entity has been modified', () => {
       const pos = Position()
       const velocity = Velocity()
 
       const entity = world.spawn(pos)
-      const result = world.query(Position)[0]
+      const result = world.query([Position])[0]
       expect(pos).toEqual(result[1])
 
       world.addComponents(entity, velocity)
       world.addComponents(entity, Tag())
-      const result2 = world.query(Position, Tag, Velocity)[0]
+      const result2 = world.query([Position, Tag, Velocity])[0]
       expect(pos).toEqual(result2[1])
       expect(velocity).toEqual(result2[3])
     })
   })
 })
 
-describe("Components", () => {
+describe('Components', () => {
   let world: World
   let Position: ComponentFactory<{ x: number; y: number }>
   let Velocity: ComponentFactory<{ dx: number; dy: number }>
@@ -97,19 +97,19 @@ describe("Components", () => {
     Velocity = world.Component<{ dx: number; dy: number }>()
   })
 
-  it("have default values", () => {
+  it('have default values', () => {
     const entity = world.spawn(Position())
     expect(world.getComponent(entity, Position)!.x).toEqual(5)
     expect(world.getComponent(entity, Position)!.y).toEqual(6)
   })
 
-  it("can be added as factories", () => {
+  it('can be added as factories', () => {
     const entity = world.spawn(Position)
     expect(world.getComponent(entity, Position)!.x).toEqual(5)
     expect(world.getComponent(entity, Position)!.y).toEqual(6)
   })
 
-  it("can be simple tags with no attributes", () => {
+  it('can be simple tags with no attributes', () => {
     const Tag = world.Component()
     const a = world.spawn(Tag())
     const b = world.spawn()
@@ -118,7 +118,7 @@ describe("Components", () => {
     expect(world.getComponent(b, Tag)).toBeNull()
   })
 
-  it("can be added to an existing entity", () => {
+  it('can be added to an existing entity', () => {
     const entity = world.spawn()
     world.addComponents(entity, Position({ x: 12, y: 21 }))
 
@@ -132,18 +132,18 @@ describe("Components", () => {
     expect(velocity.dy).toEqual(3)
   })
 
-  it("return their own key when displayed as strings", () => {
-    expect(Position.toString()).toEqual("0")
-    expect(Velocity.toString()).toEqual("1")
+  it('return their own key when displayed as strings', () => {
+    expect(Position.toString()).toEqual('0')
+    expect(Velocity.toString()).toEqual('1')
   })
 
-  it("can be modified in queries", () => {
+  it('can be modified in queries', () => {
     const entity = world.spawn(
       Position({ x: 0, y: 0 }),
       Velocity({ dx: 1, dy: 2 })
     )
 
-    for (const [e, pos, vel] of world.query(Position, Velocity)) {
+    for (const [e, pos, vel] of world.query([Position, Velocity])) {
       pos.x += vel.dx
       pos.y += vel.dy
     }
@@ -155,7 +155,7 @@ describe("Components", () => {
   })
 })
 
-describe("The cache system", () => {
+describe('The cache system', () => {
   let world: World
   let Position: ComponentFactory<{ x: number; y: number }>
   let Velocity: ComponentFactory<{ dx: number; dy: number }>
@@ -169,15 +169,15 @@ describe("The cache system", () => {
     world.spawn(Velocity({ dx: 1, dy: 1 }))
   })
 
-  it("is used when calling twice the same query", () => {
-    world.query(Position)
-    let [e] = world.query(Position)[0]
+  it('is used when calling twice the same query', () => {
+    world.query([Position])
+    let [e] = world.query([Position])[0]
     expect(e).toEqual(entityA)
   })
 })
 
-describe("intersection", () => {
-  it("works", () => {
+describe('intersection', () => {
+  it('works', () => {
     // expect(intersection([1, 2, 3], [4, 5, 6])).toEqual([])
     expect(intersection([1, 2, 3], [3, 4, 5])).toEqual([3])
     expect(intersection([1, 2, 3], [1, 2, 3])).toEqual([3, 2, 1])
