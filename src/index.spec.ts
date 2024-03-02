@@ -77,11 +77,20 @@ describe('The World', () => {
       const result = world.query([Position])[0]
       expect(pos).toEqual(result[1])
 
+      // Add components
       world.addComponents(entity, velocity)
       world.addComponents(entity, Tag())
       const result2 = world.query([Position, Tag, Velocity])[0]
       expect(pos).toEqual(result2[1])
       expect(velocity).toEqual(result2[3])
+
+      // Remove components
+      world.removeComponents(entity, Velocity, Tag)
+      const result3 = world.query([Position, Tag, Velocity])
+      expect(result3.length).toBe(0)
+
+      const result4 = world.query([Position])[0]
+      expect(result4[1]).toEqual(pos)
     })
   })
 })

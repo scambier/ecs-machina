@@ -20,7 +20,7 @@ export class World {
   private componentFactoryId = -1
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
-  private queryCache: Record<string, any> = {}
+  private queryCache: Map<string, any> = new Map()
 
   public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
     const cmpKey: ComponentId = ++this.componentFactoryId
@@ -40,13 +40,12 @@ export class World {
   }
 
   private cleanCache(factories: ComponentId[]) {
-    // log('clean ' + factories)
     for (const cmpId of factories) {
-      for (const key in this.queryCache) {
+      // iterate over the cache keys and delete the ones that contain the component
+      for (const key of this.queryCache.keys()) {
         const split = key.split('-')
-        if (split.indexOf(cmpId.toString()) > -1) {
-          // log('bust cache for ' + key)
-          delete this.queryCache[key]
+        if (split.includes(cmpId.toString())) {
+          this.queryCache.delete(key)
         }
       }
     }
@@ -59,7 +58,6 @@ export class World {
   }
 
   public destroy(entity: Entity): void {
-    // log('destroy')
     for (const cmpId in this.data) {
       this.cleanCache([Number(cmpId)])
       delete this.data[cmpId][entity]
@@ -67,7 +65,6 @@ export class World {
   }
 
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
-    // log('addcmp')
     this.cleanCache(newComponents.map(c => c._type))
     for (let cmp of newComponents) {
       this.data[cmp._type][entity] = typeof cmp === 'function' ? cmp() : cmp
@@ -75,7 +72,6 @@ export class World {
   }
 
   public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
-    // log('remove')
     this.cleanCache(components.map(c => c._type))
     for (const cmp of components) {
       delete this.data[cmp._type][entity]
@@ -119,7 +115,7 @@ export class World {
    * Returns the entity id and its entities.<br>
    * The query results are cached, and the cache is updated with added/removed entities/components
    *
-   * @example world.queryArr([Position, Rendering] as const)
+   * @example world.queryArr([Position, Rendering])
    * @param factories
    * @returns
    */
@@ -127,9 +123,8 @@ export class World {
     factories: T
   ): Array<[Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
     const cacheKey = factories.map(f => f._type).join('-')
-    const cache = this.queryCache[cacheKey]
-    if (cache)
-      return cache as Array<
+    if (this.queryCache.has(cacheKey))
+      return this.queryCache.get(cacheKey) as Array<
         [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
       >
 
@@ -144,7 +139,7 @@ export class World {
       data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
     }
 
-    this.queryCache[cacheKey] = data
+    this.queryCache.set(cacheKey, data)
     return data as Array<
       [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
     >
@@ -183,7 +178,7 @@ export class World {
 }
 
 /**
- * Fast iteration algorithm. Only works on sorted arrays.
+ * Fast intersection algorithm. Only works on sorted arrays.
  * @param array1
  * @param array2
  * @returns
