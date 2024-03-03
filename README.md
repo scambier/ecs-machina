@@ -25,17 +25,17 @@ const world = new World()
 
 ### Components
 
-Components must be declared through the `Component()` abstract factory. It returns a Component Factory, that can be used to create new components and to query the World.
+Components must be declared through the `world.Component()` abstract factory. It returns a Component Factory, which can be used to create new components and to query the World.
 
 ```ts
 // With explicit types
-const Position = Component<{ x: number; y: number }>()
+const Position = world.Component<{ x: number; y: number }>()
 
 // With default values, and implied types
-const Velocity = Component({ dx: 0, dy: 0 })
+const Velocity = world.Component({ dx: 0, dy: 0 })
 
 // You can also declare "tag" Components that have no attributes
-const IsMonster = Component()
+const IsMonster = world.Component()
 ```
 
 ### Entities
@@ -66,38 +66,26 @@ ECS-Machina does not have Systems, but has a simple `query()` function helper.
 // You can create a "system" like this, a simple function that
 // takes the whole World as a parameter.
 function movementSystem(world: World) {
-  const entities = world.query(Position, Velocity)
-  for (const [e, pos, vel] of entities) {
-    console.log(`Moving entity ${e}`)
+  const entities = world.query([Position, Velocity])
+  for (const [id, pos, vel] of entities) {
+    // The entity id is always returned
+    console.log(`Moving entity ${id}`)
 
-    // Component instances are correctly typed for efficient auto-completion
+    // Update the position
     pos.x += vel.dx
     pos.y += vel.dy
   }
 }
 
-function attackSystem(world: World) {
-  /* ... */
-}
-
 // Execute your systems against your world
 movementSystem(world)
-attackSystem(world)
 ```
 
 ## Philosophy and goals
 
-### ES5 compatible
-
-Since ECS-Machina was created to run on TIC-80, it must be compatible with the Duktape engine, which is mostly ES5. Unfortunately, this means important performance tradeoffs. If you _don't_ need ES5 compatibility, there are [several ECS libraries](https://github.com/noctjs/ecs-benchmark) that will serve you better.
-
 ### TypeScript First
 
 Games built with an ECS engine have a lot of different components and systems. Strong typings (and efficient autocompletion) is an essential feature to not get lost in your own code.
-
-### Code reusability
-
-We have a strong decoupling between the World, the Components, and the Systems. The goal is to let you write code that you can truly reuse throughout your projects.
 
 ### Strong unit tests
 
