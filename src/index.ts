@@ -149,16 +149,14 @@ export class World {
     factories: T
   ): Entity[] {
     const arrOfKeys = []
-    let l = factories.length
-    for (let i = 0; i < l; ++i) {
+    for (let i = 0; i < factories.length; ++i) {
       arrOfKeys.push(Object.keys(this.data[factories[i]._type]))
     }
     arrOfKeys.sort((a, b) => a.length - b.length)
 
     let entities = arrOfKeys[0].sort()
-    l = arrOfKeys.length
-    for (let i = 1; i < l; ++i) {
-      entities = intersection(entities.sort(), arrOfKeys[i].sort())
+    for (let i = 1; i < arrOfKeys.length; ++i) {
+      entities = intersection(entities, arrOfKeys[i].sort())
     }
 
     return entities.map(e => Number(e))
@@ -185,23 +183,17 @@ export class World {
  */
 export function intersection<T>(array1: T[], array2: T[]): T[] {
   // Don't destroy the original arrays
-  const a = array1.slice(0).sort()
-  const b = array2.slice(0).sort()
+  const a = array1.slice(0)
+  const b = array2.slice(0)
   const result: T[] = []
-  let aLast = a.length - 1
-  let bLast = b.length - 1
-  while (aLast >= 0 && bLast >= 0) {
-    if (a[aLast] > b[bLast]) {
-      a.pop()
-      --aLast
-    } else if (a[aLast] < b[bLast]) {
-      b.pop()
-      --bLast
-    } /* they're equal */ else {
-      result.push(a.pop()!)
-      b.pop()
-      --aLast
-      --bLast
+  while (a.length > 0 && b.length > 0) {
+    if (a[0] < b[0]) {
+      a.shift()
+    } else if (a[0] > b[0]) {
+      b.shift()
+    } else {
+      result.push(a.shift() as T)
+      b.shift()
     }
   }
   return result

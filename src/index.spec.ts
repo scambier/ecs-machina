@@ -187,9 +187,8 @@ describe('The cache system', () => {
 
 describe('intersection', () => {
   it('works', () => {
-    // expect(intersection([1, 2, 3], [4, 5, 6])).toEqual([])
     expect(intersection([1, 2, 3], [3, 4, 5])).toEqual([3])
-    expect(intersection([1, 2, 3], [1, 2, 3])).toEqual([3, 2, 1])
-    expect(intersection([1, 2, 3, 4], [0, 3, 2, 5])).toEqual([3, 2])
+    expect(intersection([1, 2, 3], [1, 2, 3])).toEqual([1, 2, 3])
+    expect(intersection([1, 2, 3, 4], [0, 2, 3, 5])).toEqual([2, 3])
   })
 })
