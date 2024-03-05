@@ -141,9 +141,11 @@ describe('Components', () => {
     expect(velocity.dy).toEqual(3)
   })
 
-  it('return their own key when displayed as strings', () => {
-    expect(Position.toString()).toEqual('0')
-    expect(Velocity.toString()).toEqual('1')
+  it('returns their own key when displayed as strings', () => {
+    const OtherComponent = world.Component()
+    expect(Position.toString()).toEqual('1')
+    expect(Velocity.toString()).toEqual('2')
+    expect(OtherComponent.toString()).toEqual('4')
   })
 
   it('can be modified in queries', () => {

@@ -20,10 +20,10 @@ export class World {
   private componentFactoryId = -1
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
-  private queryCache: Map<string, any> = new Map()
+  private queryCache: Map<number, any> = new Map()
 
   public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-    const cmpKey: ComponentId = ++this.componentFactoryId
+    const cmpKey: ComponentId = Math.pow(2, ++this.componentFactoryId)
     this.data[cmpKey] = {}
 
     const fn: ComponentFactory<T> = function (data = {} as any) {
@@ -43,8 +43,7 @@ export class World {
     for (const cmpId of factories) {
       // iterate over the cache keys and delete the ones that contain the component
       for (const key of this.queryCache.keys()) {
-        const split = key.split('-')
-        if (split.includes(cmpId.toString())) {
+        if (key & cmpId) {
           this.queryCache.delete(key)
         }
       }
@@ -122,7 +121,10 @@ export class World {
   public query<const T extends ReadonlyArray<ComponentFactory>>(
     factories: T
   ): Array<[Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
-    const cacheKey = factories.map(f => f._type).join('-')
+    let cacheKey = 0
+    for (let i = 0; i < factories.length; ++i) {
+      cacheKey |= factories[i]._type
+    }
     if (this.queryCache.has(cacheKey))
       return this.queryCache.get(cacheKey) as Array<
         [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
