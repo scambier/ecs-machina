@@ -22,6 +22,13 @@ export class World {
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
   private queryCache: Map<number, any> = new Map()
 
+  /**
+   * Creates a new component factory
+   *
+   * @example const Position = world.Component({ x: 0, y: 0 })
+   * @param defaultData Optional default data for the component
+   * @returns
+   */
   public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
     const cmpKey: ComponentId = Math.pow(2, ++this.componentFactoryId)
     this.data[cmpKey] = {}
@@ -29,7 +36,7 @@ export class World {
     const fn: ComponentFactory<T> = function (data = {} as any) {
       ;(data as any)._type = cmpKey
       const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-      assign(copy, data)
+      Object.assign(copy, data)
       return copy
     }
     fn._type = cmpKey
@@ -63,6 +70,13 @@ export class World {
     }
   }
 
+  /**
+   * Adds components to an entity
+   *
+   * @example world.addComponents(entity, Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 1 }))
+   * @param entity
+   * @param newComponents
+   */
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
     this.cleanCache(newComponents.map(c => c._type))
     for (let cmp of newComponents) {
@@ -70,6 +84,13 @@ export class World {
     }
   }
 
+  /**
+   * Removes components from an entity
+   *
+   * @example world.removeComponents(entity, Position, Velocity)
+   * @param entity
+   * @param components
+   */
   public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
     this.cleanCache(components.map(c => c._type))
     for (const cmp of components) {
@@ -79,6 +100,8 @@ export class World {
 
   /**
    * Returns a single component, or `null` if it doesn't exist
+   *
+   * @example world.getComponent(entity, Position)
    * @param entity
    * @param factory
    * @returns The component, or null
@@ -199,19 +222,4 @@ export function intersection<T>(array1: T[], array2: T[]): T[] {
     }
   }
   return result
-}
-
-/**
- * Object.assign polyfill for ES5 compatibility
- *
- * @param dest
- * @param source
- * @returns
- */
-function assign<T, U>(dest: T, source: U): T & U {
-  if ((Object as any).assign) return (Object as any).assign(dest, source)
-  Object.keys(source as any).forEach(
-    i => ((dest as any)[i] = (source as any)[i])
-  )
-  return dest as T & U
 }

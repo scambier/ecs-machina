@@ -12,33 +12,20 @@
 
 ## Documentation
 
-ECS-Machina is first and foremost a TypeScript library; it's meant to be used in TypeScript projects to take full advantage of its typing system.
-
-I created this library to be used in TIC-80 projects, and so it has 0 dependency and is ES5-compatible. You can "install" it by copy-pasting the whole index.ts file in your own project.
+ECS-Machina is a strongly typed Entity-Component-System library; it's meant to be used in TypeScript projects to take full advantage of its typing system.
 
 ### World
+
+The World holds your components and entities. You use it to declare component factories, spawn entities, and add or remove components.
 
 ```ts
 // Create a world to hold your entities and components
 const world = new World()
 ```
 
-### Components
-
-Components must be declared through the `world.Component()` abstract factory. It returns a Component Factory, which can be used to create new components and to query the World.
-
-```ts
-// With explicit types
-const Position = world.Component<{ x: number; y: number }>()
-
-// With default values, and implied types
-const Velocity = world.Component({ dx: 0, dy: 0 })
-
-// You can also declare "tag" Components that have no attributes
-const IsMonster = world.Component()
-```
-
 ### Entities
+
+Entities bind components together. By itself, an entity is nothing more than a reference id.
 
 ```ts
 /*
@@ -58,27 +45,54 @@ const entityB = world.spawn(
 const entityC = world.spawn(Position())
 ```
 
-### Queries & Systems
+### Components
 
-ECS-Machina does not have Systems, but has a simple `query()` function helper.
+Components in ECS-Machina must be created through Component Factories.
+
+Component Factories are strongly typed constructors, and declared like `const Factory = world.Component<YourType>()`. Those factories are then used to create new components and to query the world.
 
 ```ts
-// You can create a "system" like this, a simple function that
-// takes the whole World as a parameter.
-function movementSystem(world: World) {
-  const entities = world.query([Position, Velocity])
-  for (const [id, pos, vel] of entities) {
-    // The entity id is always returned
-    console.log(`Moving entity ${id}`)
+// Create a strongly typed factory
+const Position = world.Component<{ x: number; y: number }>()
 
-    // Update the position
-    pos.x += vel.dx
-    pos.y += vel.dy
-  }
+// With default values
+const Velocity = world.Component({ dx: 0, dy: 0 })
+
+// You can also declare "tagging" factories that have no attributes
+const IsMonster = world.Component()
+```
+
+Once a factory is declared, you use it to create a component
+
+```ts
+const position = Position({ x: 5, y: 10 })
+```
+
+### Add and remove components
+
+```ts
+world.addComponents(entity, Position({ x: 12, y: 21 }))
+world.removeComponents(entity, Velocity, Tag)
+```
+
+### Queries & updates
+
+Get components of a specific entity:
+```ts
+const [pos, vel] = world.getComponents(entity, [Position, Velocity])
+```
+
+Get all entities that match a set of components, and update those components:
+```ts
+const entities = world.query([Position, Velocity])
+for (const [id, pos, vel] of entities) {
+  // The entity id is always returned
+  console.log(`Moving entity ${id}`)
+
+  // Update the position
+  pos.x += vel.dx
+  pos.y += vel.dy
 }
-
-// Execute your systems against your world
-movementSystem(world)
 ```
 
 ## Philosophy and goals
