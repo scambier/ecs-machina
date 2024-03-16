@@ -4,7 +4,7 @@
   "editor.trimAutoWhitespace": true,
   "files.trimTrailingWhitespace": true,
   "editor.codeActionsOnSave": {
-    "source.organizeImports": false,
+    "source.organizeImports": "never"
   },
   "files.autoSave": "onFocusChange",
   "editor.formatOnSave": true,
