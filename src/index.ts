@@ -11,7 +11,7 @@ type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
  * The Component Factory, used to generate components of the same type
  */
 export type ComponentFactory<T = any> = {
-  (data?: T): ComponentData<T>
+  (data?: Partial<T>): ComponentData<T>
   _type: ComponentId
 }
 
