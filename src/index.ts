@@ -71,17 +71,26 @@ export class World {
   }
 
   /**
-   * Adds components to an entity
+   * Adds or updates components to an entity
    *
    * @example world.addComponents(entity, Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 1 }))
    * @param entity
-   * @param newComponents
+   * @param components
    */
-  public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
-    this.cleanCache(newComponents.map(c => c._type))
-    for (let cmp of newComponents) {
+  public setComponents(entity: Entity, ...components: ComponentData[]) {
+    this.cleanCache(components.map(c => c._type))
+    for (let cmp of components) {
       this.data[cmp._type][entity] = typeof cmp === 'function' ? cmp() : cmp
     }
+  }
+
+  /**
+   * Adds or updates components to an entity
+   *
+   * @deprecated Use `setComponents` instead
+   */
+  public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
+    this.setComponents(entity, ...newComponents)
   }
 
   /**
