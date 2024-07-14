@@ -15,9 +15,33 @@ export type ComponentFactory<T = any> = {
   _type: ComponentId
 }
 
+let componentFactoryId = -1
+/**
+ * Creates a new component factory
+ *
+ * @example const Position = world.Component({ x: 0, y: 0 })
+ * @param defaultData Optional default data for the component
+ * @returns
+ */
+export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
+  const cmpKey: ComponentId = Math.pow(2, ++componentFactoryId)
+
+  const fn: ComponentFactory<T> = function (data = {} as any) {
+    ;(data as any)._type = cmpKey
+    const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
+    Object.assign(copy, data)
+    return copy
+  }
+  fn._type = cmpKey
+  // fn.toString = () => {
+  //   return fn._type.toString()
+  // }
+  return fn
+}
+
 export class World {
   private entityCounter = -1
-  private componentFactoryId = -1
+  // private componentFactoryId = -1
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
   private queryCache: Map<number, any> = new Map()
@@ -29,22 +53,22 @@ export class World {
    * @param defaultData Optional default data for the component
    * @returns
    */
-  public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-    const cmpKey: ComponentId = Math.pow(2, ++this.componentFactoryId)
-    this.data[cmpKey] = {}
+  // public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
+  //   const cmpKey: ComponentId = Math.pow(2, ++this.componentFactoryId)
+  //   this.data[cmpKey] = {}
 
-    const fn: ComponentFactory<T> = function (data = {} as any) {
-      ;(data as any)._type = cmpKey
-      const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-      Object.assign(copy, data)
-      return copy
-    }
-    fn._type = cmpKey
-    fn.toString = () => {
-      return fn._type.toString()
-    }
-    return fn
-  }
+  //   const fn: ComponentFactory<T> = function (data = {} as any) {
+  //     ;(data as any)._type = cmpKey
+  //     const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
+  //     Object.assign(copy, data)
+  //     return copy
+  //   }
+  //   fn._type = cmpKey
+  //   fn.toString = () => {
+  //     return fn._type.toString()
+  //   }
+  //   return fn
+  // }
 
   private cleanCache(factories: ComponentId[]) {
     for (const cmpId of factories) {
@@ -59,7 +83,7 @@ export class World {
 
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
-    this.addComponents(entity, ...components)
+    this.setComponents(entity, ...components)
     return entity
   }
 
@@ -80,6 +104,9 @@ export class World {
   public setComponents(entity: Entity, ...components: ComponentData[]) {
     this.cleanCache(components.map(c => c._type))
     for (let cmp of components) {
+      if (!this.data[cmp._type]) {
+        this.data[cmp._type] = {}
+      }
       this.data[cmp._type][entity] = typeof cmp === 'function' ? cmp() : cmp
     }
   }
@@ -119,7 +146,7 @@ export class World {
     entity: Entity,
     factory: ComponentFactory<T>
   ): ComponentData<T> | null {
-    return (this.data[factory._type][entity] as ComponentData<T>) ?? null
+    return (this.data[factory._type]?.[entity] as ComponentData<T>) ?? null
   }
 
   /**
@@ -184,7 +211,11 @@ export class World {
   ): Entity[] {
     const arrOfKeys = []
     for (let i = 0; i < factories.length; ++i) {
-      arrOfKeys.push(Object.keys(this.data[factories[i]._type]))
+      const componentDataByType = this.data[factories[i]._type]
+      if (!componentDataByType) {
+        return []
+      }
+      arrOfKeys.push(Object.keys(componentDataByType))
     }
     arrOfKeys.sort((a, b) => a.length - b.length)
 

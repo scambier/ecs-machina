@@ -1,4 +1,10 @@
-import { ComponentFactory, Entity, intersection, World } from './index'
+import {
+  ComponentFactory,
+  Entity,
+  intersection,
+  World,
+  Component,
+} from './index'
 
 describe('The World', () => {
   let world: World
@@ -7,9 +13,9 @@ describe('The World', () => {
   let Tag: ComponentFactory
   beforeEach(() => {
     world = new World()
-    Position = world.Component({ x: 5, y: 6 })
-    Velocity = world.Component<{ dx: number; dy: number }>()
-    Tag = world.Component()
+    Position = Component({ x: 5, y: 6 })
+    Velocity = Component<{ dx: number; dy: number }>()
+    Tag = Component()
   })
 
   describe('spawn', () => {
@@ -102,8 +108,8 @@ describe('Components', () => {
 
   beforeEach(() => {
     world = new World()
-    Position = world.Component({ x: 5, y: 6 })
-    Velocity = world.Component<{ dx: number; dy: number }>()
+    Position = Component({ x: 5, y: 6 })
+    Velocity = Component<{ dx: number; dy: number }>()
   })
 
   it('have default values', () => {
@@ -119,7 +125,7 @@ describe('Components', () => {
   })
 
   it('can be simple tags with no attributes', () => {
-    const Tag = world.Component()
+    const Tag = Component()
     const a = world.spawn(Tag())
     const b = world.spawn()
 
@@ -142,10 +148,9 @@ describe('Components', () => {
   })
 
   it('returns their own key when displayed as strings', () => {
-    const OtherComponent = world.Component()
-    expect(Position.toString()).toEqual('1')
-    expect(Velocity.toString()).toEqual('2')
-    expect(OtherComponent.toString()).toEqual('4')
+    const OtherComponent = Component()
+    expect(Position._type).not.toEqual(Velocity._type)
+    expect(Velocity._type).not.toEqual(OtherComponent._type)
   })
 
   it('can be modified in queries', () => {
@@ -174,8 +179,8 @@ describe('The cache system', () => {
   let entityA: Entity
   beforeEach(() => {
     world = new World()
-    Position = world.Component<{ x: number; y: number }>()
-    Velocity = world.Component<{ dx: number; dy: number }>()
+    Position = Component<{ x: number; y: number }>()
+    Velocity = Component<{ dx: number; dy: number }>()
     entityA = world.spawn(Position({ x: 1, y: 1 }))
     world.spawn(Velocity({ dx: 1, dy: 1 }))
   })
