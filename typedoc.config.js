@@ -8,10 +8,10 @@ module.exports = {
   includeDeclarations: false,
   exclude: [
     '**/tests/**/*',
-    'src/debug/**/*'
+    'src/debug/**/*',
   ],
   excludeNotExported: true,
   excludePrivate: true,
   excludeProtected: true,
-  excludeExternals: true
+  excludeExternals: true,
 }

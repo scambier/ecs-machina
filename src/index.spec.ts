@@ -1,20 +1,20 @@
 import {
+  Component,
   ComponentFactory,
   Entity,
   intersection,
   World,
-  Component,
 } from './index'
 
 describe('The World', () => {
   let world: World
-  let Position: ComponentFactory<{ x: number; y: number }>
-  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+  let Position: ComponentFactory<{ x: number, y: number }>
+  let Velocity: ComponentFactory<{ dx: number, dy: number }>
   let Tag: ComponentFactory
   beforeEach(() => {
     world = new World()
     Position = Component({ x: 5, y: 6 })
-    Velocity = Component<{ dx: number; dy: number }>()
+    Velocity = Component<{ dx: number, dy: number }>()
     Tag = Component()
   })
 
@@ -103,13 +103,13 @@ describe('The World', () => {
 
 describe('Components', () => {
   let world: World
-  let Position: ComponentFactory<{ x: number; y: number }>
-  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+  let Position: ComponentFactory<{ x: number, y: number }>
+  let Velocity: ComponentFactory<{ dx: number, dy: number }>
 
   beforeEach(() => {
     world = new World()
     Position = Component({ x: 5, y: 6 })
-    Velocity = Component<{ dx: number; dy: number }>()
+    Velocity = Component<{ dx: number, dy: number }>()
   })
 
   it('have default values', () => {
@@ -159,7 +159,7 @@ describe('Components', () => {
       Velocity({ dx: 1, dy: 2 })
     )
 
-    for (const [e, pos, vel] of world.query([Position, Velocity])) {
+    for (const [, pos, vel] of world.query([Position, Velocity])) {
       pos.x += vel.dx
       pos.y += vel.dy
     }
@@ -173,21 +173,21 @@ describe('Components', () => {
 
 describe('The cache system', () => {
   let world: World
-  let Position: ComponentFactory<{ x: number; y: number }>
-  let Velocity: ComponentFactory<{ dx: number; dy: number }>
+  let Position: ComponentFactory<{ x: number, y: number }>
+  let Velocity: ComponentFactory<{ dx: number, dy: number }>
 
   let entityA: Entity
   beforeEach(() => {
     world = new World()
-    Position = Component<{ x: number; y: number }>()
-    Velocity = Component<{ dx: number; dy: number }>()
+    Position = Component<{ x: number, y: number }>()
+    Velocity = Component<{ dx: number, dy: number }>()
     entityA = world.spawn(Position({ x: 1, y: 1 }))
     world.spawn(Velocity({ dx: 1, dy: 1 }))
   })
 
   it('is used when calling twice the same query', () => {
     world.query([Position])
-    let [e] = world.query([Position])[0]
+    const [e] = world.query([Position])[0]
     expect(e).toEqual(entityA)
   })
 })

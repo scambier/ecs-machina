@@ -1,7 +1,7 @@
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
   ? never
-  : { [K in keyof T]: T[K] } /*& { _type: ComponentId }*/
+  : { [K in keyof T]: T[K] } /* & { _type: ComponentId } */
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
@@ -70,17 +70,6 @@ export class World {
   //   return fn
   // }
 
-  private cleanCache(factories: ComponentId[]) {
-    for (const cmpId of factories) {
-      // iterate over the cache keys and delete the ones that contain the component
-      for (const key of this.queryCache.keys()) {
-        if (key & cmpId) {
-          this.queryCache.delete(key)
-        }
-      }
-    }
-  }
-
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
     this.setComponents(entity, ...components)
@@ -103,7 +92,7 @@ export class World {
    */
   public setComponents(entity: Entity, ...components: ComponentData[]) {
     this.cleanCache(components.map(c => c._type))
-    for (let cmp of components) {
+    for (const cmp of components) {
       if (!this.data[cmp._type]) {
         this.data[cmp._type] = {}
       }
@@ -206,6 +195,11 @@ export class World {
     >
   }
 
+  /**
+   * Returns the ids of the entities that have all the queried components
+   * @param factories
+   * @returns
+   */
   public getEntities<T extends ReadonlyArray<ComponentFactory>>(
     factories: T
   ): Entity[] {
@@ -225,6 +219,17 @@ export class World {
     }
 
     return entities.map(e => Number(e))
+  }
+
+  private cleanCache(factories: ComponentId[]) {
+    for (const cmpId of factories) {
+      // iterate over the cache keys and delete the ones that contain the component
+      for (const key of this.queryCache.keys()) {
+        if (key & cmpId) {
+          this.queryCache.delete(key)
+        }
+      }
+    }
   }
 
   private getComponentsArrUnsafe<T extends ReadonlyArray<ComponentFactory>>(
@@ -254,9 +259,11 @@ export function intersection<T>(array1: T[], array2: T[]): T[] {
   while (a.length > 0 && b.length > 0) {
     if (a[0] < b[0]) {
       a.shift()
-    } else if (a[0] > b[0]) {
+    }
+    else if (a[0] > b[0]) {
       b.shift()
-    } else {
+    }
+    else {
       result.push(a.shift() as T)
       b.shift()
     }
