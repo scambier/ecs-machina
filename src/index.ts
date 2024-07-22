@@ -7,10 +7,6 @@ export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 type ComponentId = number
 type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
 
-type GetComponentsReturnType<T extends ReadonlyArray<ComponentFactory>> = {
-  [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null
-}
-
 /**
  * The Component Factory, used to generate components of the same type
  */
@@ -161,25 +157,15 @@ export class World {
    * @returns A sorted array of components
    */
   public getComponents<const T extends ReadonlyArray<ComponentFactory>>(
-    entityOrEntities: Entity | Entity[],
+    entity: Entity,
     factories: T
-  ): GetComponentsReturnType<T> | GetComponentsReturnType<T>[] {
-    if (Array.isArray(entityOrEntities)) {
-      const result: GetComponentsReturnType<T>[] = []
-      for (const entity of entityOrEntities) {
-        result.push(this.getComponents(entity, factories) as GetComponentsReturnType<T>)
-      }
-      return result
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
+    const l = factories.length
+    const cmps = new Array(l) as (ComponentData | null)[]
+    for (let i = 0; i < l; ++i) {
+      cmps[i] = this.getComponent(entity, factories[i])
     }
-    else {
-      const entity = entityOrEntities
-      const l = factories.length
-      const cmps = new Array(l) as (ComponentData | null)[]
-      for (let i = 0; i < l; ++i) {
-        cmps[i] = this.getComponent(entity, factories[i])
-      }
-      return cmps as GetComponentsReturnType<T>
-    }
+    return cmps as any
   }
 
   /**
