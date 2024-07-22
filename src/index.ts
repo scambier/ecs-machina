@@ -160,14 +160,14 @@ export class World {
   public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: TFactories
-  ): [Entity, ...{ [K in keyof TFactories]: ComponentData<ComponentFactoryContent<TFactories[K]>> | null }] {
+  ): [Entity, ...{ [K in keyof TFactories]: (ComponentFactoryContent<TFactories[K]> | null) }] {
     const l = factories.length
-    const cmps = new Array(l) as [Entity, ...[ ComponentData | null ]]
+    const cmps = new Array(l)
     cmps[0] = entity
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
     }
-    return cmps as any
+    return cmps as [Entity, ...{ [K in keyof TFactories]: (ComponentFactoryContent<TFactories[K]> | null) }]
   }
 
   /**
@@ -178,16 +178,16 @@ export class World {
    * @param factories
    * @returns
    */
-  public query<const T extends ReadonlyArray<ComponentFactory>>(
-    factories: T
-  ): Array<[Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]> {
+  public query<const TFactories extends ReadonlyArray<ComponentFactory>>(
+    factories: TFactories
+  ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
     let cacheKey = 0
     for (let i = 0; i < factories.length; ++i) {
       cacheKey |= factories[i]._type
     }
     if (this.queryCache.has(cacheKey))
       return this.queryCache.get(cacheKey) as Array<
-        [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
+        [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
       >
 
     // 1) Get the entities (ids) that have all queried factories
@@ -203,7 +203,7 @@ export class World {
 
     this.queryCache.set(cacheKey, data)
     return data as Array<
-      [Entity, ...{ [K in keyof T]: ComponentFactoryContent<T[K]> }]
+      [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
     >
   }
 
