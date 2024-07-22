@@ -199,3 +199,19 @@ describe('intersection', () => {
     expect(intersection([1, 2, 3, 4], [0, 2, 3, 5])).toEqual([2, 3])
   })
 })
+
+describe('getComponents', () => {
+  it('works', () => {
+    const world = new World()
+    const Position = Component<{ x: number, y: number }>()
+    const Velocity = Component<{ dx: number, dy: number }>()
+    const entity = world.spawn(Position({ x: 1, y: 2 }), Velocity({ dx: 3, dy: 4 }))
+
+    const [e, pos, vel] = world.getComponents(entity, [Position, Velocity])
+    expect(e).toEqual(entity)
+    expect(pos!.x).toEqual(1)
+    expect(pos!.y).toEqual(2)
+    expect(vel!.dx).toEqual(3)
+    expect(vel!.dy).toEqual(4)
+  })
+})

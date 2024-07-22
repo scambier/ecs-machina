@@ -150,20 +150,22 @@ export class World {
 
   /**
    * Returns several components of an entity.
+   * If a component doesn't exist, it will be `null`
    *
    * @example world.getComponents(entity, [Position, Velocity])
    * @param entity
    * @param factories
-   * @returns A sorted array of components
+   * @returns An array of [entity, component1, component2, ...]
    */
-  public getComponents<const T extends ReadonlyArray<ComponentFactory>>(
+  public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
-    factories: T
-  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
+    factories: TFactories
+  ): [Entity, ...{ [K in keyof TFactories]: ComponentData<ComponentFactoryContent<TFactories[K]>> | null }] {
     const l = factories.length
-    const cmps = new Array(l) as (ComponentData | null)[]
+    const cmps = new Array(l) as [Entity, ...[ ComponentData | null ]]
+    cmps[0] = entity
     for (let i = 0; i < l; ++i) {
-      cmps[i] = this.getComponent(entity, factories[i])
+      cmps[i + 1] = this.getComponent(entity, factories[i])
     }
     return cmps as any
   }
