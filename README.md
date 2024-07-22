@@ -22,6 +22,31 @@ The World holds your components and entities. You use it to declare component fa
 const world = new World()
 ```
 
+
+### Components
+
+Components in ECS-Machina must be created through Component Factories.
+
+Component Factories are strongly typed constructors, and declared like `const Factory = Component<YourType>()`. Those factories are then used to create new components and to query the world.
+
+```ts
+// Create a strongly typed factory
+const Position = Component<{ x: number; y: number }>()
+
+// With default values
+const Velocity = Component({ dx: 0, dy: 0 })
+
+// You can also declare "tagging" factories that have no attributes
+const IsMonster = Component()
+```
+
+Once a factory is declared, you use it to create a component
+
+```ts
+const position = Position({ x: 5, y: 10 })
+```
+
+
 ### Entities
 
 Entities bind components together. By itself, an entity is nothing more than a reference id.
@@ -44,30 +69,7 @@ const entityB = world.spawn(
 const entityC = world.spawn(Position())
 ```
 
-### Components
-
-Components in ECS-Machina must be created through Component Factories.
-
-Component Factories are strongly typed constructors, and declared like `const Factory = world.Component<YourType>()`. Those factories are then used to create new components and to query the world.
-
-```ts
-// Create a strongly typed factory
-const Position = world.Component<{ x: number; y: number }>()
-
-// With default values
-const Velocity = world.Component({ dx: 0, dy: 0 })
-
-// You can also declare "tagging" factories that have no attributes
-const IsMonster = world.Component()
-```
-
-Once a factory is declared, you use it to create a component
-
-```ts
-const position = Position({ x: 5, y: 10 })
-```
-
-### Add and remove components
+#### Add and remove components
 
 ```ts
 world.addComponents(entity, Position({ x: 12, y: 21 }))
