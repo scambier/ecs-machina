@@ -70,12 +70,21 @@ export class World {
   //   return fn
   // }
 
+  /**
+   * Creates a new entity with the given components
+   * @param components
+   * @returns
+   */
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
     this.setComponents(entity, ...components)
     return entity
   }
 
+  /**
+   * Removes an entity from the world
+   * @param entity
+   */
   public destroy(entity: Entity): void {
     for (const cmpId in this.data) {
       this.cleanCache([Number(cmpId)])
@@ -84,7 +93,8 @@ export class World {
   }
 
   /**
-   * Adds or updates components to an entity
+   * Adds or updates components. If a component already exists, it will be updated with the new data.
+   * This method does not remove components that are not in the list.
    *
    * @example world.addComponents(entity, Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 1 }))
    * @param entity
@@ -103,7 +113,7 @@ export class World {
   /**
    * Adds or updates components to an entity
    *
-   * @deprecated Use `setComponents` instead
+   * @deprecated Use {@link setComponents} instead
    */
   public addComponents(entity: Entity, ...newComponents: ComponentData[]) {
     this.setComponents(entity, ...newComponents)

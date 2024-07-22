@@ -7,7 +7,9 @@
 
 ## Installation
 
-`npm install ecs-machina`
+```
+npm install ecs-machina
+```
 
 ## Documentation
 
