@@ -15,7 +15,7 @@ export type ComponentFactory<T = any> = {
   _type: ComponentId
 }
 
-let componentFactoryId = -1
+let componentFactoryId = 0
 /**
  * Creates a new component factory
  *
@@ -24,7 +24,7 @@ let componentFactoryId = -1
  * @returns
  */
 export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-  const cmpKey: ComponentId = Math.pow(2, ++componentFactoryId)
+  const cmpKey: ComponentId = ++componentFactoryId
 
   const fn: ComponentFactory<T> = function (data = {} as any) {
     ;(data as any)._type = cmpKey
@@ -182,13 +182,15 @@ export class World {
     factories: TFactories
   ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
     let cacheKey = 0
+    const prime = 31 // Small prime for hashing
     for (let i = 0; i < factories.length; ++i) {
-      cacheKey |= factories[i]._type
+      cacheKey = (cacheKey * prime) + factories[i]._type
     }
-    if (this.queryCache.has(cacheKey))
+    if (this.queryCache.has(cacheKey)) {
       return this.queryCache.get(cacheKey) as Array<
         [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
       >
+    }
 
     // 1) Get the entities (ids) that have all queried factories
     const entities = this.getEntities(factories)

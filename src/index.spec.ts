@@ -10,11 +10,13 @@ describe('The World', () => {
   let world: World
   let Position: ComponentFactory<{ x: number, y: number }>
   let Velocity: ComponentFactory<{ dx: number, dy: number }>
+  let IsFlag: ComponentFactory
   let Tag: ComponentFactory
   beforeEach(() => {
     world = new World()
     Position = Component({ x: 5, y: 6 })
     Velocity = Component<{ dx: number, dy: number }>()
+    IsFlag = Component()
     Tag = Component()
   })
 
@@ -67,12 +69,22 @@ describe('The World', () => {
     it('fetches multiple components in a different order', () => {
       const pos = Position()
       const velocity = Velocity()
-      const entity = world.spawn(pos, velocity)
-      const result = world.query([Position, Velocity])[0]
+      const flag = IsFlag()
+      const entity = world.spawn(pos, velocity, flag)
+      const resultA = world.query([Position, IsFlag, Velocity])[0]
 
-      expect(entity).toEqual(result[0])
-      expect(pos).toEqual(result[1])
-      expect(velocity).toEqual(result[2])
+      expect(entity).toEqual(resultA[0])
+      expect(pos).toEqual(resultA[1])
+      expect(flag).toEqual(resultA[2])
+      expect(velocity).toEqual(resultA[3])
+
+      // In a different order
+
+      const resultB = world.query([IsFlag, Velocity, Position])[0]
+      expect(entity).toEqual(resultB[0])
+      expect(flag).toEqual(resultB[1])
+      expect(velocity).toEqual(resultB[2])
+      expect(pos).toEqual(resultB[3])
     })
 
     it('fetches components after the entity has been modified', () => {
