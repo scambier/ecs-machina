@@ -77,6 +77,10 @@ export class World {
    */
   public spawn(...components: ComponentData[]): Entity {
     const entity = ++this.entityCounter
+    // If the components are passed as an array, flatten it
+    if (components.length === 1 && Array.isArray(components[0])) {
+      components = components[0]
+    }
     this.setComponents(entity, ...components)
     return entity
   }
