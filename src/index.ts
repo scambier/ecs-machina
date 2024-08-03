@@ -175,7 +175,7 @@ export class World {
   }
 
   /**
-   * Returns the entity id and its entities.<br>
+   * Returns the entity id and its components.<br>
    * The query results are cached, and the cache is updated with added/removed entities/components
    *
    * @example world.queryArr([Position, Rendering])
@@ -191,7 +191,7 @@ export class World {
       cacheKey = (cacheKey * prime) + factories[i]._type
     }
     if (this.queryCache.has(cacheKey)) {
-      return this.queryCache.get(cacheKey) as Array<
+      return [...this.queryCache.get(cacheKey)] as Array<
         [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
       >
     }
@@ -208,7 +208,7 @@ export class World {
     }
 
     this.queryCache.set(cacheKey, data)
-    return data as Array<
+    return [...data] as Array<
       [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
     >
   }
