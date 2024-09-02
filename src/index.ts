@@ -1,7 +1,7 @@
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
-  ? never
-  : { [K in keyof T]: T[K] } /* & { _type: ComponentId } */
+  ? { _type: ComponentId }
+  : { [K in keyof T]: T[K] } & { _type: ComponentId }
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
@@ -110,7 +110,7 @@ export class World {
       if (!this.data[cmp._type]) {
         this.data[cmp._type] = {}
       }
-      this.data[cmp._type][entity] = typeof cmp === 'function' ? cmp() : cmp
+      this.data[cmp._type][entity] = typeof cmp === 'function' ? (cmp as any)() : cmp
     }
   }
 
@@ -152,6 +152,10 @@ export class World {
     return (this.data[factory._type]?.[entity] as ComponentData<T>) ?? null
   }
 
+  public hasComponent<T>(entity: Entity, factory: ComponentFactory<T>): boolean {
+    return this.data[factory._type]?.[entity] !== undefined
+  }
+
   /**
    * Returns several components of an entity.
    * If a component doesn't exist, it will be `null`
@@ -188,7 +192,8 @@ export class World {
     let cacheKey = 0
     const prime = 31 // Small prime for hashing
     for (let i = 0; i < factories.length; ++i) {
-      cacheKey = (cacheKey * prime) + factories[i]._type
+      const uniqueValue = factories[i]._type * (i + 1)
+      cacheKey = (cacheKey * prime) + uniqueValue
     }
     if (this.queryCache.has(cacheKey)) {
       return [...this.queryCache.get(cacheKey)] as Array<

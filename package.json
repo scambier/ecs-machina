@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "start": "tsc --watch",
+    "dev": "tsc --watch",
     "prepack": "npm run build",
     "build": "node build.js",
     "test": "jest --coverage"
