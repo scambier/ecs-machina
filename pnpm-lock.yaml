@@ -39,7 +39,7 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.3)(webpack@5.91.0)
       typedoc:
-        specifier: ^0.26.5
+        specifier: ~0.26.5
         version: 0.26.5(typescript@5.4.3)
       typescript:
         specifier: ^5.4.3
