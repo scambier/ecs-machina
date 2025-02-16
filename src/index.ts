@@ -1,3 +1,5 @@
+import merge from 'lodash.merge'
+
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
   ? { _type: ComponentId }
@@ -28,8 +30,8 @@ export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
 
   const fn: ComponentFactory<T> = function (data = {} as any) {
     ;(data as any)._type = cmpKey
-    const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-    Object.assign(copy, data)
+    const copy: any = {}
+    Object.assign(copy, defaultData, data)
     return copy
   }
   fn._type = cmpKey

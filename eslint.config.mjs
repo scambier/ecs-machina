@@ -62,6 +62,7 @@ export default tseslint.config(
         },
       ],
       '@stylistic/array-bracket-spacing': ['error', 'never'],
+      '@stylistic/max-len': ['warn', 100],
     },
     languageOptions: {
       globals: globals.browser,
