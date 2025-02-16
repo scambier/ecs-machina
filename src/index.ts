@@ -31,7 +31,7 @@ export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
   const fn: ComponentFactory<T> = function (data = {} as any) {
     ;(data as any)._type = cmpKey
     const copy: any = {}
-    Object.assign(copy, defaultData, data)
+    merge(copy, defaultData, data)
     return copy
   }
   fn._type = cmpKey
@@ -47,6 +47,7 @@ export class World {
 
   private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
   private queryCache: Map<number, any> = new Map()
+  private componentToCacheKeys: Map<ComponentId, Set<number>> = new Map()
 
   /**
    * Creates a new component factory
@@ -193,10 +194,20 @@ export class World {
   ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
     let cacheKey = 0
     const prime = 31 // Small prime for hashing
-    for (let i = 0; i < factories.length; ++i) {
-      const uniqueValue = factories[i]._type * (i + 1)
-      cacheKey = (cacheKey * prime) + uniqueValue
+
+    // Compute the cache key
+    for (const factory of factories) {
+      cacheKey = (cacheKey * prime) + factory._type
     }
+
+    // Update the reverse mapping for cache cleaning
+    for (const factory of factories) {
+      if (!this.componentToCacheKeys.has(factory._type)) {
+        this.componentToCacheKeys.set(factory._type, new Set())
+      }
+      this.componentToCacheKeys.get(factory._type)!.add(cacheKey)
+    }
+
     if (this.queryCache.has(cacheKey)) {
       return [...this.queryCache.get(cacheKey)] as Array<
         [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
@@ -248,11 +259,12 @@ export class World {
 
   private cleanCache(factories: ComponentId[]) {
     for (const cmpId of factories) {
-      // iterate over the cache keys and delete the ones that contain the component
-      for (const key of this.queryCache.keys()) {
-        if (key & cmpId) {
+      if (this.componentToCacheKeys.has(cmpId)) {
+        const cacheKeys = this.componentToCacheKeys.get(cmpId)!
+        for (const key of cacheKeys) {
           this.queryCache.delete(key)
         }
+        this.componentToCacheKeys.delete(cmpId)
       }
     }
   }
