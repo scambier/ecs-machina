@@ -27,15 +27,11 @@ export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
   const cmpKey: ComponentId = ++componentFactoryId
 
   const fn: ComponentFactory<T> = function (data = {} as any) {
-    ;(data as any)._type = cmpKey
-    const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-    Object.assign(copy, data)
-    return copy
+    const copy = mergeDeep(isObject(data) ? {} : [], defaultData, data)
+    ;(copy as any)._type = cmpKey
+    return copy as ComponentData<T>
   }
   fn._type = cmpKey
-  // fn.toString = () => {
-  //   return fn._type.toString()
-  // }
   return fn
 }
 
@@ -43,32 +39,10 @@ export class World {
   private entityCounter = -1
   // private componentFactoryId = -1
 
-  private data: Record<ComponentId, Record<Entity, ComponentData>> = {}
+  private data = new Map<ComponentId, Map<Entity, ComponentData>>()
+  private deactivated = new Set<Entity>()
   private queryCache: Map<number, any> = new Map()
-
-  /**
-   * Creates a new component factory
-   *
-   * @example const Position = world.Component({ x: 0, y: 0 })
-   * @param defaultData Optional default data for the component
-   * @returns
-   */
-  // public Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
-  //   const cmpKey: ComponentId = Math.pow(2, ++this.componentFactoryId)
-  //   this.data[cmpKey] = {}
-
-  //   const fn: ComponentFactory<T> = function (data = {} as any) {
-  //     ;(data as any)._type = cmpKey
-  //     const copy = defaultData ? JSON.parse(JSON.stringify(defaultData)) : {}
-  //     Object.assign(copy, data)
-  //     return copy
-  //   }
-  //   fn._type = cmpKey
-  //   fn.toString = () => {
-  //     return fn._type.toString()
-  //   }
-  //   return fn
-  // }
+  private componentToCacheKeys: Map<ComponentId, Set<number>> = new Map()
 
   /**
    * Creates a new entity with the given components
@@ -90,10 +64,19 @@ export class World {
    * @param entity
    */
   public destroy(entity: Entity): void {
-    for (const cmpId in this.data) {
-      this.cleanCache([Number(cmpId)])
-      delete this.data[cmpId][entity]
+    const data = this.data
+    for (const item of data) {
+      this.cleanCache([Number(item[0])])
+      item[1].delete(entity)
     }
+  }
+
+  public deactivate(entity: Entity): void {
+    this.deactivated.add(entity)
+  }
+
+  public reactivate(entity: Entity): void {
+    this.deactivated.delete(entity)
   }
 
   /**
@@ -105,13 +88,34 @@ export class World {
    * @param components
    */
   public setComponents(entity: Entity, ...components: ComponentData[]) {
-    this.cleanCache(components.map(c => c._type))
-    for (const cmp of components) {
-      if (!this.data[cmp._type]) {
-        this.data[cmp._type] = {}
-      }
-      this.data[cmp._type][entity] = typeof cmp === 'function' ? (cmp as any)() : cmp
+    const types = []
+    const data = this.data
+    for (let i = 0; i < components.length; i++) {
+      types[i] = components[i]._type
     }
+
+    const typesToClean = []
+    for (let cmp of components) {
+      cmp = typeof cmp === 'function' ? (cmp as any)() : cmp
+      if (!data.has(cmp._type)) data.set(cmp._type, new Map())
+
+      // If the entity doesn't have the component,
+      // add it and flag it for cache clean
+      if (!this.hasComponent(entity, cmp)) {
+        typesToClean.push(cmp._type)
+        data.get(cmp._type)!.set(entity, cmp)
+        continue
+      }
+
+      // If the entity already has the component,
+      // update its fields (and don't bust the cache)
+      const og = data.get(cmp._type)?.get(entity)
+      if (og) {
+        mergeDeep(og, cmp)
+      }
+    }
+
+    this.cleanCache(typesToClean)
   }
 
   /**
@@ -131,9 +135,14 @@ export class World {
    * @param components
    */
   public removeComponents(entity: Entity, ...components: ComponentFactory[]) {
-    this.cleanCache(components.map(c => c._type))
+    const types = []
+    const data = this.data
+    for (let i = 0; i < components.length; i++) {
+      types[i] = components[i]._type
+    }
+    this.cleanCache(types)
     for (const cmp of components) {
-      delete this.data[cmp._type][entity]
+      data.get(cmp._type)?.delete(entity)
     }
   }
 
@@ -145,15 +154,12 @@ export class World {
    * @param factory
    * @returns The component, or null
    */
-  public getComponent<T>(
-    entity: Entity,
-    factory: ComponentFactory<T>
-  ): ComponentData<T> | null {
-    return (this.data[factory._type]?.[entity] as ComponentData<T>) ?? null
+  public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
+    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>) ?? null
   }
 
-  public hasComponent<T>(entity: Entity, factory: ComponentFactory<T>): boolean {
-    return this.data[factory._type]?.[entity] !== undefined
+  public hasComponent(entity: Entity, factory: { _type: number }): boolean {
+    return !!this.data.get(factory._type)!.has(entity)
   }
 
   /**
@@ -168,14 +174,17 @@ export class World {
   public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: TFactories
-  ): [Entity, ...{ [K in keyof TFactories]: (ComponentFactoryContent<TFactories[K]> | null) }] {
+  ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }] {
     const l = factories.length
     const cmps = new Array(l)
     cmps[0] = entity
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
     }
-    return cmps as [Entity, ...{ [K in keyof TFactories]: (ComponentFactoryContent<TFactories[K]> | null) }]
+    return cmps as [
+      Entity,
+      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }
+    ]
   }
 
   /**
@@ -191,31 +200,55 @@ export class World {
   ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
     let cacheKey = 0
     const prime = 31 // Small prime for hashing
-    for (let i = 0; i < factories.length; ++i) {
-      const uniqueValue = factories[i]._type * (i + 1)
-      cacheKey = (cacheKey * prime) + uniqueValue
+
+    // Compute the cache key
+    for (let i = 0; i < factories.length; i++) {
+      cacheKey = cacheKey * prime + factories[i]._type
     }
+
+    // Update the reverse mapping for cache cleaning
+    const componentToCacheKeys = this.componentToCacheKeys
+    for (let i = 0; i < factories.length; i++) {
+      const factory = factories[i]
+      const cache = componentToCacheKeys.get(factory._type)
+      if (!cache) {
+        componentToCacheKeys.set(factory._type, new Set([cacheKey]))
+      }
+      else {
+        cache.add(cacheKey)
+      }
+    }
+
+    let data: Array<unknown>
+
+    // Query cached
     if (this.queryCache.has(cacheKey)) {
-      return [...this.queryCache.get(cacheKey)] as Array<
+      data = [...this.queryCache.get(cacheKey)] as Array<
         [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
       >
     }
 
-    // 1) Get the entities (ids) that have all queried factories
-    const entities = this.getEntities(factories)
+    // Query not cached
+    else {
+      // 1) Get the entities (ids) that have all queried factories
+      const entities = this.getEntities(factories)
 
-    // 2) Get the queried components from their factories
-    const l = entities.length
-    const data = new Array(l)
-    for (let i = 0; i < l; ++i) {
-      const e = entities[i]
-      data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
+      // 2) Get the queried components from their factories
+      const l = entities.length
+      data = new Array(l)
+      for (let i = 0; i < l; ++i) {
+        const e = entities[i]
+        data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
+      }
+
+      this.queryCache.set(cacheKey, data)
     }
 
-    this.queryCache.set(cacheKey, data)
-    return [...data] as Array<
-      [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
-    >
+    return (
+      [...data] as Array<
+        [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
+      >
+    ).filter(o => !this.deactivated.has(o[0]))
   }
 
   /**
@@ -223,34 +256,41 @@ export class World {
    * @param factories
    * @returns
    */
-  public getEntities<T extends ReadonlyArray<ComponentFactory>>(
-    factories: T
-  ): Entity[] {
-    const arrOfKeys = []
+  public getEntities<T extends ReadonlyArray<ComponentFactory>>(factories: T): Entity[] {
+    const arrOfKeys: number[][] = []
     for (let i = 0; i < factories.length; ++i) {
-      const componentDataByType = this.data[factories[i]._type]
+      const componentDataByType = this.data.get(factories[i]._type)
       if (!componentDataByType) {
         return []
       }
-      arrOfKeys.push(Object.keys(componentDataByType))
+      arrOfKeys.push([...componentDataByType.keys()])
     }
     arrOfKeys.sort((a, b) => a.length - b.length)
 
-    let entities = arrOfKeys[0].sort()
+    let entities = arrOfKeys[0]
     for (let i = 1; i < arrOfKeys.length; ++i) {
-      entities = intersection(entities, arrOfKeys[i].sort())
+      entities = memoizedIntersection(arrOfKeys[0], arrOfKeys[i])
     }
 
-    return entities.map(e => Number(e))
+    const entitiesIds: number[] = []
+    for (let i = 0; i < entities.length; i++) {
+      entitiesIds[i] = Number(entities[i])
+    }
+
+    return entitiesIds
   }
 
   private cleanCache(factories: ComponentId[]) {
-    for (const cmpId of factories) {
-      // iterate over the cache keys and delete the ones that contain the component
-      for (const key of this.queryCache.keys()) {
-        if (key & cmpId) {
-          this.queryCache.delete(key)
+    const queryCache = this.queryCache
+    const componentToCacheKeys = this.componentToCacheKeys
+    for (let i = 0; i < factories.length; i++) {
+      const cmpId = factories[i]
+      if (componentToCacheKeys.has(cmpId)) {
+        const cacheKeys = componentToCacheKeys.get(cmpId)!
+        for (const key of cacheKeys) {
+          queryCache.delete(key)
         }
+        componentToCacheKeys.delete(cmpId)
       }
     }
   }
@@ -261,12 +301,15 @@ export class World {
   ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> | null } {
     const l = factories.length
     const cmps = new Array(l) as (ComponentData | null)[]
+    const data = this.data
     for (let i = 0; i < l; ++i) {
-      cmps[i] = this.data[factories[i]._type][entity]
+      cmps[i] = data.get(factories[i]._type)!.get(entity)!
     }
     return cmps as any
   }
 }
+
+// #region Utils
 
 /**
  * Fast intersection algorithm. Only works on sorted arrays.
@@ -275,6 +318,8 @@ export class World {
  * @returns
  */
 export function intersection<T>(array1: T[], array2: T[]): T[] {
+  array1.sort()
+  array2.sort()
   // Don't destroy the original arrays
   const a = array1.slice(0)
   const b = array2.slice(0)
@@ -293,3 +338,62 @@ export function intersection<T>(array1: T[], array2: T[]): T[] {
   }
   return result
 }
+
+const memoizedIntersection = memoize(intersection)
+
+interface Mergeable {
+  [key: string]: any
+}
+
+function isObject(item: unknown): item is object & Mergeable {
+  return !!item && typeof item === 'object' && !Array.isArray(item)
+}
+
+export function mergeDeep(target: Mergeable, ...sources: (Mergeable | undefined)[]) {
+  if (!sources.length) return target
+  const source = sources.shift()
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        if (isObject(source[key])) {
+          if (!target[key]) {
+            Object.assign(target, { [key]: {} })
+          }
+          else {
+            target[key] = Object.assign({}, target[key])
+          }
+          mergeDeep(target[key], source[key])
+        }
+        else if (Array.isArray(source[key])) {
+          target[key] = [...source[key]]
+        }
+        else {
+          target[key] = source[key]
+        }
+      }
+    }
+  }
+  else if (Array.isArray(target) && Array.isArray(source)) {
+    target.push(...source)
+  }
+
+  return mergeDeep(target, ...sources)
+}
+
+function memoize<T extends (...args: any[]) => any>(fn: T): T {
+  const cache = new Map<string, any>()
+  return ((...args: any[]) => {
+    const key = JSON.stringify(args)
+    if (cache.has(key)) {
+      return cache.get(key)
+    }
+    else {
+      const result = fn(...args)
+      cache.set(key, result)
+      return result
+    }
+  }) as T
+}
+
+// #endregion Utils

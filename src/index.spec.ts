@@ -1,8 +1,10 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
   Component,
   ComponentFactory,
   Entity,
   intersection,
+  mergeDeep,
   World,
 } from './index'
 
@@ -153,7 +155,7 @@ describe('Components', () => {
     expect(position.x).toEqual(12)
     expect(position.y).toEqual(21)
 
-    world.addComponents(entity, Velocity({ dx: 2, dy: 3 }))
+    world.setComponents(entity, Velocity({ dx: 2, dy: 3 }))
     const velocity = world.getComponent(entity, Velocity)!
     expect(velocity.dx).toEqual(2)
     expect(velocity.dy).toEqual(3)
@@ -217,7 +219,10 @@ describe('getComponents', () => {
     const world = new World()
     const Position = Component<{ x: number, y: number }>()
     const Velocity = Component<{ dx: number, dy: number }>()
-    const entity = world.spawn(Position({ x: 1, y: 2 }), Velocity({ dx: 3, dy: 4 }))
+    const entity = world.spawn(
+      Position({ x: 1, y: 2 }),
+      Velocity({ dx: 3, dy: 4 })
+    )
 
     const [e, pos, vel] = world.getComponents(entity, [Position, Velocity])
     expect(e).toEqual(entity)
@@ -225,5 +230,36 @@ describe('getComponents', () => {
     expect(pos!.y).toEqual(2)
     expect(vel!.dx).toEqual(3)
     expect(vel!.dy).toEqual(4)
+  })
+})
+
+describe('mergeDeep', () => {
+  it('works', () => {
+    const target = { a: 1, b: { c: 2 } }
+    const source1 = { b: { d: 3 }, e: 4 }
+    const source2 = { b: { e: [1, 2, 3] } }
+
+    const result = mergeDeep(target, source1, source2)
+
+    expect(result).toEqual({ a: 1, b: { c: 2, d: 3, e: [1, 2, 3] }, e: 4 })
+  })
+
+  it('doesn\'t change results when mutating sources', () => {
+    const target = { a: 1, b: { c: 2 } }
+    const source1 = { b: { d: 3 }, e: 4 }
+    const source2 = { b: { e: [1, 2, 3] } }
+
+    const result = mergeDeep(target, source1, source2)
+    source1.b.d = 42
+    source2.b.e[0] = 42
+
+    expect(result).toEqual({ a: 1, b: { c: 2, d: 3, e: [1, 2, 3] }, e: 4 })
+  })
+
+  it('works when the root object is an array', () => {
+    const target: number[] = []
+    const source = [1, 2]
+    const result = mergeDeep(target, source)
+    expect(result).toEqual([1, 2])
   })
 })

@@ -5,15 +5,20 @@
 
 > A zero-dependency TypeScript Entity-Component-System Library
 
+ECS-Machina is a strongly typed ECS library. It was first built for use in TIC-80, so it can be drag-n-dropped into any TypeScript project.
+
+It's also certainly not the fastest ECS library out there, but it's simple, easy to understand, and has no dependencies. It should be enough for most small projects.
+
 ## Installation
 
 ```
 npm install ecs-machina
 ```
 
-## Documentation
+Or just drop `src/index.ts` into your TIC-80 project, and rename it to e.g. `ecs.ts`.
+See [tic80-typescript](https://github.com/scambier/tic80-typescript) for more information on how to use TIC-80 with TypeScript.
 
-ECS-Machina is a strongly typed Entity-Component-System library; it's meant to be used in TypeScript projects to take full advantage of its typing system.
+## Documentation
 
 ### World
 
@@ -23,7 +28,6 @@ The World holds your components and entities. You use it to declare component fa
 // Create a world to hold your entities and components
 const world = new World()
 ```
-
 
 ### Components
 
@@ -48,6 +52,8 @@ Once a factory is declared, you use it to create a component
 const position = Position({ x: 5, y: 10 })
 ```
 
+> [!TIP]
+> Once you have your World and Components, use code completion on `world.` to see all available methods to create/query/update/destroy entities and their components.
 
 ### Entities
 
@@ -74,18 +80,20 @@ const entityC = world.spawn(Position())
 #### Add and remove components
 
 ```ts
-world.addComponents(entity, Position({ x: 12, y: 21 }))
+world.setComponents(entity, Position({ x: 12, y: 21 }))
 world.removeComponents(entity, Velocity, Tag)
 ```
 
 ### Queries & updates
 
 Get components of a specific entity:
+
 ```ts
 const [pos, vel] = world.getComponents(entity, [Position, Velocity])
 ```
 
 Get all entities that match a set of components, and update those components:
+
 ```ts
 const entities = world.query([Position, Velocity])
 for (const [id, pos, vel] of entities) {
