@@ -269,7 +269,7 @@ export class World {
 
     let entities = arrOfKeys[0]
     for (let i = 1; i < arrOfKeys.length; ++i) {
-      entities = memoizedIntersection(arrOfKeys[0], arrOfKeys[i])
+      entities = memoizedIntersection(entities, arrOfKeys[i])
     }
 
     const entitiesIds: number[] = []
