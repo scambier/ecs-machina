@@ -317,13 +317,13 @@ export class World {
  * @param array2
  * @returns
  */
-export function intersection<T>(array1: T[], array2: T[]): T[] {
+export function intersection(array1: number[], array2: number[]): number[] {
   array1.sort()
   array2.sort()
   // Don't destroy the original arrays
-  const a = array1.slice(0)
-  const b = array2.slice(0)
-  const result: T[] = []
+  const a = array1.slice(0).sort((x, y) => x - y)
+  const b = array2.slice(0).sort((x, y) => x - y)
+  const result: number[] = []
   while (a.length > 0 && b.length > 0) {
     if (a[0] < b[0]) {
       a.shift()
@@ -332,7 +332,7 @@ export function intersection<T>(array1: T[], array2: T[]): T[] {
       b.shift()
     }
     else {
-      result.push(a.shift() as T)
+      result.push(a.shift()!)
       b.shift()
     }
   }
