@@ -36,7 +36,7 @@ export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
 }
 
 export class World {
-  private entityCounter = -1
+  private entityCounter = 0 // The first entity id will be 1, which is easier to check for truthiness
   // private componentFactoryId = -1
 
   private data = new Map<ComponentId, Map<Entity, ComponentData>>()
