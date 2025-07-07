@@ -154,8 +154,21 @@ export class World {
    * @param factory
    * @returns The component, or null
    */
-  public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
+  public queryComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
     return (this.data.get(factory._type)?.get(entity) as ComponentData<T>) ?? null
+  }
+
+  /**
+   * Returns a single component from an entity.
+   * Doesn't check if the component exists.
+   *
+   * @example world.getComponent(entity, Position)
+   * @param entity
+   * @param factory
+   * @returns The component, or null
+   */
+  public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> {
+    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>)
   }
 
   public hasComponent(entity: Entity, factory: { _type: number }): boolean {
@@ -166,17 +179,17 @@ export class World {
    * Returns several components of an entity.
    * If a component doesn't exist, it will be `null`
    *
-   * @example world.getComponents(entity, [Position, Velocity])
+   * @example world.queryComponents(entity, [Position, Velocity])
    * @param entity
    * @param factories
    * @returns An array of [entity, component1, component2, ...]
    */
-  public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
+  public queryComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: TFactories
   ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }] {
     const l = factories.length
-    const cmps = new Array(l)
+    const cmps = Array.from({ length: l })
     cmps[0] = entity
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
@@ -184,6 +197,31 @@ export class World {
     return cmps as [
       Entity,
       ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }
+    ]
+  }
+
+  /**
+   * Returns several components of an entity.
+   * Doesn't check if any of the components exist
+   *
+   * @example world.queryComponents(entity, [Position, Velocity])
+   * @param entity
+   * @param factories
+   * @returns An array of [entity, component1, component2, ...]
+   */
+  public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
+    entity: Entity,
+    factories: TFactories
+  ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }] {
+    const l = factories.length
+    const cmps = Array.from({ length: l })
+    cmps[0] = entity
+    for (let i = 0; i < l; ++i) {
+      cmps[i + 1] = this.getComponent(entity, factories[i])
+    }
+    return cmps as [
+      Entity,
+      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }
     ]
   }
 
