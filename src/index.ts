@@ -172,7 +172,7 @@ export class World {
   }
 
   public hasComponent(entity: Entity, factory: { _type: number }): boolean {
-    return !!this.data.get(factory._type)!.has(entity)
+    return !!this.data.get(factory._type)?.has(entity)
   }
 
   /**
