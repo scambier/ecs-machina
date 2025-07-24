@@ -168,7 +168,7 @@ export class World {
    * @returns The component, or null
    */
   public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> {
-    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>)
+    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>) ?? null
   }
 
   public hasComponent(entity: Entity, factory: { _type: number }): boolean {
