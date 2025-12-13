@@ -18,10 +18,12 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: npm install, make test-coverage
+      - name: Install dependencies and run tests (pnpm)
         run: |
-          npm install
-          npm run test
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm install
+          pnpm test
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
