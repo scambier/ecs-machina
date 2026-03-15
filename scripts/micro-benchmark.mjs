@@ -25,17 +25,17 @@ function benchmark(label, fn, iterations, warmup = 10) {
   for (let i = 0; i < warmup; i++) fn(i)
   const start = performance.now()
   for (let i = 0; i < iterations; i++) fn(i)
-  const totalMs = performance.now() - start
+  const totalUs = (performance.now() - start) * 1000
   return {
     metric: label,
     iterations,
-    totalMs,
-    avgMs: totalMs / iterations,
-    opsPerSec: iterations / (totalMs / 1000),
+    totalUs,
+    avgUs: totalUs / iterations,
+    opsPerSec: iterations / (totalUs / 1000000),
   }
 }
 
-function buildWorld(entityCount = 12000) {
+function buildWorld(entityCount = 100_000) {
   const world = new World()
   const Position = Component('Position', { x: 0, y: 0 })
   const Velocity = Component('Velocity', { dx: 0, dy: 0 })
@@ -70,7 +70,7 @@ if (baselineQuery.length === 0) {
 }
 
 const queryHot = benchmark(
-  'query hot-cache (ms)',
+  'query hot-cache (µs)',
   () => {
     world.query(queryFactories)
   },
@@ -79,7 +79,7 @@ const queryHot = benchmark(
 
 let rotatingEntityIndex = 0
 const setAndQuery = benchmark(
-  'setComponents + query (ms)',
+  'setComponents + query (µs)',
   () => {
     const entity = entities[rotatingEntityIndex]
     rotatingEntityIndex = (rotatingEntityIndex + 1) % entities.length
@@ -104,22 +104,22 @@ const queryCount = benchmark(
 console.table([
   {
     metric: queryHot.metric,
-    avgMs: queryHot.avgMs.toFixed(3),
-    totalMs: queryHot.totalMs.toFixed(1),
+    ['avg µs']: queryHot.avgUs.toFixed(3),
+    ['total µs']: queryHot.totalUs.toFixed(1),
     opsPerSec: Math.round(queryHot.opsPerSec).toLocaleString(),
     note: `${baselineQuery.length} entities matched`,
   },
   {
     metric: setAndQuery.metric,
-    avgMs: setAndQuery.avgMs.toFixed(3),
-    totalMs: setAndQuery.totalMs.toFixed(1),
+    ['avg µs']: setAndQuery.avgUs.toFixed(3),
+    ['total µs']: setAndQuery.totalUs.toFixed(1),
     opsPerSec: Math.round(setAndQuery.opsPerSec).toLocaleString(),
     note: 'cache invalidation path',
   },
   {
     metric: queryCount.metric,
-    avgMs: queryCount.avgMs.toFixed(3),
-    totalMs: queryCount.totalMs.toFixed(1),
+    ['avg µs']: queryCount.avgUs.toFixed(3),
+    ['total µs']: queryCount.totalUs.toFixed(1),
     opsPerSec: Math.round(queryCount.opsPerSec).toLocaleString(),
     note: 'read throughput',
   },
