@@ -17,14 +17,14 @@ describe('The World', () => {
 
   describe('spawn', () => {
     it('creates an entity', () => {
-      const entity = world.spawn()
+      const entity = world.create()
       expect(entity).toEqual(0)
     })
   })
 
   describe('destroy', () => {
     it('removes an entity from the world', () => {
-      const entityA = world.spawn([Tag()])
+      const entityA = world.create([Tag()])
       expect(world.getComponent(entityA, Tag)).toBeTruthy()
 
       world.destroy(entityA)
@@ -34,7 +34,7 @@ describe('The World', () => {
 
   describe('hasComponent', () => {
     it('returns wether an entity has a component', () => {
-      const entityA = world.spawn([Position])
+      const entityA = world.create([Position])
       expect(world.getComponent(entityA, Position)).toBeTruthy()
       expect(world.getComponent(entityA, Velocity)).toBeFalsy()
     })
@@ -43,7 +43,7 @@ describe('The World', () => {
   describe('query', () => {
     it('fetches a single component', () => {
       const pos = Position()
-      const entity = world.spawn([pos])
+      const entity = world.create([pos])
       const result = world.query([Position])[0]
 
       expect(entity).toEqual(result[0])
@@ -53,7 +53,7 @@ describe('The World', () => {
     it('fetches multiple components', () => {
       const pos = Position()
       const velocity = Velocity()
-      const entity = world.spawn([pos, velocity])
+      const entity = world.create([pos, velocity])
       const result = world.query([Velocity, Position])[0]
 
       expect(entity).toEqual(result[0])
@@ -65,7 +65,7 @@ describe('The World', () => {
       const pos = Position()
       const velocity = Velocity()
       const flag = IsFlag()
-      const entity = world.spawn([pos, velocity, flag])
+      const entity = world.create([pos, velocity, flag])
       const resultA = world.query([Position, IsFlag, Velocity])[0]
 
       expect(entity).toEqual(resultA[0])
@@ -86,7 +86,7 @@ describe('The World', () => {
       const pos = Position()
       const velocity = Velocity()
 
-      const entity = world.spawn([pos])
+      const entity = world.create([pos])
       const result = world.query([Position])[0]
       expect(pos).toEqual(result[1])
 
@@ -120,28 +120,28 @@ describe('Components', () => {
   })
 
   it('have default values', () => {
-    const entity = world.spawn([Position()])
+    const entity = world.create([Position()])
     expect(world.getComponent(entity, Position).x).toEqual(5)
     expect(world.getComponent(entity, Position).y).toEqual(6)
   })
 
   it('can be added as factories', () => {
-    const entity = world.spawn([Position])
+    const entity = world.create([Position])
     expect(world.getComponent(entity, Position).x).toEqual(5)
     expect(world.getComponent(entity, Position).y).toEqual(6)
   })
 
   it('can be simple tags with no attributes', () => {
     const Tag = Component('Tag', {})
-    const a = world.spawn([Tag()])
-    const b = world.spawn()
+    const a = world.create([Tag()])
+    const b = world.create()
 
     expect(world.getComponent(a, Tag)).not.toBeUndefined()
     expect(world.getComponent(b, Tag)).toBeUndefined()
   })
 
   it('can be added to an existing entity', () => {
-    const entity = world.spawn()
+    const entity = world.create()
     world.setComponents(entity, Position({ x: 12, y: 21 }))
 
     const position = world.getComponent(entity, Position)
@@ -161,7 +161,7 @@ describe('Components', () => {
   })
 
   it('can be modified in queries', () => {
-    const entity = world.spawn([Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 2 })])
+    const entity = world.create([Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 2 })])
 
     for (const [, pos, vel] of world.query([Position, Velocity])) {
       pos.x += vel.dx
@@ -185,8 +185,8 @@ describe('The cache system', () => {
     world = new World()
     Position = Component('Position', { x: 0, y: 0 })
     Velocity = Component('Velocity', { dx: 0, dy: 0 })
-    entityA = world.spawn([Position({ x: 1, y: 1 })])
-    world.spawn([Velocity({ dx: 1, dy: 1 })])
+    entityA = world.create([Position({ x: 1, y: 1 })])
+    world.create([Velocity({ dx: 1, dy: 1 })])
   })
 
   it('is used when calling twice the same query', () => {
@@ -201,7 +201,7 @@ describe('getComponents', () => {
     const world = new World()
     const Position = Component('Position', { x: 0, y: 0 })
     const Velocity = Component('Velocity', { dx: 0, dy: 0 })
-    const entity = world.spawn([Position({ x: 1, y: 2 }), Velocity({ dx: 3, dy: 4 })])
+    const entity = world.create([Position({ x: 1, y: 2 }), Velocity({ dx: 3, dy: 4 })])
 
     const [e, pos, vel] = world.getComponents(entity, [Position, Velocity])
     expect(e).toEqual(entity)
@@ -240,5 +240,79 @@ describe('mergeDeep', () => {
     const source = [1, 2]
     const result = mergeDeep(target, source)
     expect(result).toEqual([1, 2])
+  })
+})
+
+describe('import/export', () => {
+  it('should export', () => {
+    const world = new World()
+    const Position = Component('Position', { x: 0, y: 0 })
+    const Velocity = Component('Velocity', { dx: 0, dy: 0 })
+    const posId = Position._cmpId
+    const velId = Velocity._cmpId
+    world.create([Position({ x: 1, y: 2 }), Velocity({ dx: 1, dy: 2 })])
+    world.create([Position({ x: 3, y: 4 }), Velocity({ dx: 3, dy: 4 })])
+    world.create([Position({ x: 5, y: 6 }), Velocity({ dx: 5, dy: 6 })])
+
+    const data = world.export()
+
+    // console.log(JSON.stringify(data, null, 1))
+    expect(data).toEqual({
+      entityCounter: 2,
+      data: [
+        [
+          'Position',
+          [
+            [0, { x: 1, y: 2 }],
+            [1, { x: 3, y: 4 }],
+            [2, { x: 5, y: 6 }],
+          ],
+        ],
+        [
+          'Velocity',
+          [
+            [0, { dx: 1, dy: 2 }],
+            [1, { dx: 3, dy: 4 }],
+            [2, { dx: 5, dy: 6 }],
+          ],
+        ],
+      ],
+      deactivated: [],
+    })
+  })
+
+  it('should import', () => {
+    const world = new World()
+    const Position = Component('Position', { x: 0, y: 0 })
+    const Velocity = Component('Velocity', { dx: 0, dy: 0 })
+    const posId = Position._cmpId
+    const velId = Velocity._cmpId
+    const data = {
+      entityCounter: 2,
+      data: [
+        [
+          Position._cmpId,
+          [
+            [0, { x: 1, y: 2, _cmpId: posId, _cmpName: 'Position' }],
+            [1, { x: 3, y: 4, _cmpId: posId, _cmpName: 'Position' }],
+            [2, { x: 5, y: 6, _cmpId: posId, _cmpName: 'Position' }],
+          ],
+        ],
+        [
+          Velocity._cmpId,
+          [
+            [0, { dx: 1, dy: 2, _cmpId: velId, _cmpName: 'Velocity' }],
+            [1, { dx: 3, dy: 4, _cmpId: velId, _cmpName: 'Velocity' }],
+            [2, { dx: 5, dy: 6, _cmpId: velId, _cmpName: 'Velocity' }],
+          ],
+        ],
+      ],
+      deactivated: [],
+    }
+
+    world.import(data)
+
+    const entities = world.query([Position, Velocity])
+    expect(entities).toHaveLength(3)
   })
 })

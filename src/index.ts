@@ -1,14 +1,15 @@
 /* eslint-disable */
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
-  ? { _cmpId: ComponentId }
-  : { [K in keyof T]: T[K] } & { _cmpId: ComponentId }
+  ? { _cmpId: ComponentId; _cmpName: string }
+  : { [K in keyof T]: T[K] } & { _cmpId: ComponentId; _cmpName: string }
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
 type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
 
-const uniqueNames = new Set<string>()
+const cmpNameToId = new Map<string, ComponentId>()
+const cmpIdToName = new Map<ComponentId, string>()
 
 /**
  * The Component Factory, used to generate components of the same type
@@ -27,16 +28,14 @@ let componentFactoryId = 0
  * @param defaultData Optional default data for the component
  * @returns
  */
-export function Component<T extends Dict>(
-  cmpName: string,
-  defaultData: T
-): ComponentFactory<T> {
-  if (uniqueNames.has(cmpName)) {
+export function Component<T extends Dict>(cmpName: string, defaultData: T): ComponentFactory<T> {
+  if (cmpNameToId.has(cmpName)) {
     console && console.warn && console.warn(`Component name "${cmpName}" is already used`)
   }
-  uniqueNames.add(cmpName)
 
   const cmpKey: ComponentId = ++componentFactoryId
+  cmpNameToId.set(cmpName, cmpKey)
+  cmpIdToName.set(cmpKey, cmpName)
 
   const fn: ComponentFactory<T> = function (data = {} as any) {
     const copy = mergeDeep(isObject(data) ? {} : [], defaultData, data)
@@ -63,7 +62,7 @@ export class World {
    * @param components
    * @returns
    */
-  public spawn(components: ComponentData[] = []): Entity {
+  public create(components: ComponentData[] = []): Entity {
     const entity = ++this.entityCounter
     // If the components are passed as an array, flatten it
     if (components.length === 1 && Array.isArray(components[0])) {
@@ -171,7 +170,7 @@ export class World {
 
   public queryComponent<T>(
     entity: Entity,
-    factory: ComponentFactory<T>
+    factory: ComponentFactory<T>,
   ): ComponentData<T> | undefined {
     return this.getComponent(entity, factory)
   }
@@ -191,11 +190,8 @@ export class World {
    */
   public queryComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
-    factories: TFactories
-  ): [
-    Entity,
-    ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | undefined },
-  ] {
+    factories: TFactories,
+  ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | undefined }] {
     const l = factories.length
     const cmps = []
     cmps[0] = entity
@@ -219,7 +215,7 @@ export class World {
    */
   public getComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
-    factories: TFactories
+    factories: TFactories,
   ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }] {
     const l = factories.length
     const cmps = []
@@ -227,10 +223,7 @@ export class World {
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
     }
-    return cmps as [
-      Entity,
-      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> },
-    ]
+    return cmps as [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
   }
 
   /**
@@ -242,10 +235,8 @@ export class World {
    * @returns
    */
   public query<const TFactories extends ReadonlyArray<ComponentFactory>>(
-    factories: TFactories
-  ): Array<
-    [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
-  > {
+    factories: TFactories,
+  ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
     let cacheKey = 0
     const prime = 31 // Small prime for hashing
 
@@ -255,9 +246,7 @@ export class World {
     }
 
     let data = this.queryCache.get(cacheKey) as
-      | Array<
-          [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
-        >
+      | Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]>
       | undefined
 
     // Query not cached
@@ -362,6 +351,42 @@ export class World {
     return entitiesIds
   }
 
+  public export() {
+    const data = []
+    for (const entry of this.data.entries()) {
+      const cmpName = cmpIdToName.get(entry[0])
+      data.push([
+        cmpName,
+        [...entry[1].entries()].map(o => {
+          const c = { ...o[1] }
+          delete c._cmpId
+          delete c._cmpName
+          return c
+        }),
+      ])
+    }
+    return {
+      entityCounter: this.entityCounter,
+      data,
+      deactivated: Array.from(this.deactivated),
+    }
+  }
+
+  public import(json: any) {
+    for (const [id, a] of json.data as [number, [number, unknown][]][]) {
+      const m = new Map()
+      for (const [id, b] of a) {
+        m.set(id, b)
+      }
+      this.data.set(id, m)
+      console.log(this.data)
+    }
+    this.entityCounter = json.entityCounter
+    // @ts-expect-error
+    this.data = new Map(Object.entries(json.data))
+    this.deactivated = new Set(json.deactivated)
+  }
+
   private cleanCache(factories: ComponentId[]) {
     const queryCache = this.queryCache
     const componentToCacheKeys = this.componentToCacheKeys
@@ -379,7 +404,7 @@ export class World {
 
   private getComponentsArrUnsafe<T extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
-    factories: T
+    factories: T,
   ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> } {
     const l = factories.length
     const cmps = [] as ComponentData[]
