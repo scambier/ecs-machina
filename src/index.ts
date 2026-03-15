@@ -1,18 +1,22 @@
+/* eslint-disable */
 export type Entity = number
 export type ComponentData<T = any> = T extends ComponentFactory
-  ? { _type: ComponentId }
-  : { [K in keyof T]: T[K] } & { _type: ComponentId }
+  ? { _cmpId: ComponentId }
+  : { [K in keyof T]: T[K] } & { _cmpId: ComponentId }
 export type Inner<X> = X extends ComponentFactory<infer I> ? I : never
 
 type ComponentId = number
 type ComponentFactoryContent<T> = T extends ComponentFactory<infer U> ? U : T
+
+const uniqueNames = new Set<string>()
 
 /**
  * The Component Factory, used to generate components of the same type
  */
 export type ComponentFactory<T = any> = {
   (data?: Partial<T>): ComponentData<T>
-  _type: ComponentId
+  _cmpId: ComponentId
+  _cmpName: string
 }
 
 let componentFactoryId = 0
@@ -23,20 +27,31 @@ let componentFactoryId = 0
  * @param defaultData Optional default data for the component
  * @returns
  */
-export function Component<T>(defaultData?: Partial<T>): ComponentFactory<T> {
+export function Component<T extends Dict>(
+  cmpName: string,
+  defaultData: T
+): ComponentFactory<T> {
+  if (uniqueNames.has(cmpName)) {
+    console && console.warn && console.warn(`Component name "${cmpName}" is already used`)
+  }
+  uniqueNames.add(cmpName)
+
   const cmpKey: ComponentId = ++componentFactoryId
 
   const fn: ComponentFactory<T> = function (data = {} as any) {
     const copy = mergeDeep(isObject(data) ? {} : [], defaultData, data)
-    ;(copy as any)._type = cmpKey
+    ;(copy as any)._cmpId = cmpKey
+    ;(copy as any)._cmpName = cmpName
     return copy as ComponentData<T>
   }
-  fn._type = cmpKey
+  fn._cmpId = cmpKey
+  fn._cmpName = cmpName
   return fn
 }
 
 export class World {
   private entityCounter = -1
+  // private componentFactoryId = -1
 
   private data = new Map<ComponentId, Map<Entity, ComponentData>>()
   private deactivated = new Set<Entity>()
@@ -48,7 +63,7 @@ export class World {
    * @param components
    * @returns
    */
-  public spawn(...components: ComponentData[]): Entity {
+  public spawn(components: ComponentData[] = []): Entity {
     const entity = ++this.entityCounter
     // If the components are passed as an array, flatten it
     if (components.length === 1 && Array.isArray(components[0])) {
@@ -64,12 +79,10 @@ export class World {
    */
   public destroy(entity: Entity): void {
     const data = this.data
-    const typesToClean: ComponentId[] = []
-    for (const [cmpId, componentsByEntity] of data) {
-      typesToClean.push(cmpId)
-      componentsByEntity.delete(entity)
+    for (const item of data) {
+      this.cleanCache([Number(item[0])])
+      item[1].delete(entity)
     }
-    this.cleanCache(typesToClean)
   }
 
   public deactivate(entity: Entity): void {
@@ -81,8 +94,7 @@ export class World {
   }
 
   /**
-   * Adds or updates components.
-   * If a component already exists, it will be updated with the new data.
+   * Adds or updates components. If a component already exists, it will be updated with the new data.
    * This method does not remove components that are not in the list.
    *
    * @example world.addComponents(entity, Position({ x: 0, y: 0 }), Velocity({ dx: 1, dy: 1 }))
@@ -91,22 +103,23 @@ export class World {
    */
   public setComponents(entity: Entity, ...components: ComponentData[]) {
     const data = this.data
-    const typesToClean: ComponentId[] = []
+
+    const typesToClean = []
     for (let cmp of components) {
       cmp = typeof cmp === 'function' ? (cmp as any)() : cmp
-      if (!data.has(cmp._type)) data.set(cmp._type, new Map())
+      if (!data.has(cmp._cmpId)) data.set(cmp._cmpId, new Map())
 
       // If the entity doesn't have the component,
       // add it and flag it for cache clean
       if (!this.hasComponent(entity, cmp)) {
-        typesToClean.push(cmp._type)
-        data.get(cmp._type)!.set(entity, cmp)
+        typesToClean.push(cmp._cmpId)
+        data.get(cmp._cmpId)!.set(entity, cmp)
         continue
       }
 
       // If the entity already has the component,
       // update its fields (and don't bust the cache)
-      const og = data.get(cmp._type)?.get(entity)
+      const og = data.get(cmp._cmpId)?.get(entity)
       if (og) {
         mergeDeep(og, cmp)
       }
@@ -135,24 +148,12 @@ export class World {
     const types = []
     const data = this.data
     for (let i = 0; i < components.length; i++) {
-      types[i] = components[i]._type
+      types[i] = components[i]._cmpId
     }
     this.cleanCache(types)
     for (const cmp of components) {
-      data.get(cmp._type)?.delete(entity)
+      data.get(cmp._cmpId)?.delete(entity)
     }
-  }
-
-  /**
-   * Returns a single component, or `null` if it doesn't exist
-   *
-   * @example world.getComponent(entity, Position)
-   * @param entity
-   * @param factory
-   * @returns The component, or null
-   */
-  public queryComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> | null {
-    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>) ?? null
   }
 
   /**
@@ -165,11 +166,18 @@ export class World {
    * @returns The component, or null
    */
   public getComponent<T>(entity: Entity, factory: ComponentFactory<T>): ComponentData<T> {
-    return (this.data.get(factory._type)?.get(entity) as ComponentData<T>) ?? null
+    return this.data.get(factory._cmpId)?.get(entity) as ComponentData<T>
   }
 
-  public hasComponent(entity: Entity, factory: { _type: number }): boolean {
-    return !!this.data.get(factory._type)?.has(entity)
+  public queryComponent<T>(
+    entity: Entity,
+    factory: ComponentFactory<T>
+  ): ComponentData<T> | undefined {
+    return this.getComponent(entity, factory)
+  }
+
+  public hasComponent(entity: Entity, factory: { _cmpId: number }): boolean {
+    return !!this.data.get(factory._cmpId)?.has(entity)
   }
 
   /**
@@ -184,16 +192,19 @@ export class World {
   public queryComponents<const TFactories extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: TFactories
-  ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }] {
+  ): [
+    Entity,
+    ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | undefined },
+  ] {
     const l = factories.length
-    const cmps = Array.from({ length: l + 1 })
+    const cmps = []
     cmps[0] = entity
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
     }
     return cmps as [
       Entity,
-      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | null }
+      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> | undefined },
     ]
   }
 
@@ -211,12 +222,15 @@ export class World {
     factories: TFactories
   ): [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }] {
     const l = factories.length
-    const cmps = Array.from({ length: l + 1 })
+    const cmps = []
     cmps[0] = entity
     for (let i = 0; i < l; ++i) {
       cmps[i + 1] = this.getComponent(entity, factories[i])
     }
-    return cmps as [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
+    return cmps as [
+      Entity,
+      ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> },
+    ]
   }
 
   /**
@@ -229,59 +243,69 @@ export class World {
    */
   public query<const TFactories extends ReadonlyArray<ComponentFactory>>(
     factories: TFactories
-  ): Array<[Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]> {
+  ): Array<
+    [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
+  > {
     let cacheKey = 0
     const prime = 31 // Small prime for hashing
 
     // Compute the cache key
     for (let i = 0; i < factories.length; i++) {
-      cacheKey = cacheKey * prime + factories[i]._type
+      cacheKey = cacheKey * prime + factories[i]._cmpId
     }
 
-    // Update the reverse mapping for cache cleaning
-    const componentToCacheKeys = this.componentToCacheKeys
-    for (let i = 0; i < factories.length; i++) {
-      const factory = factories[i]
-      const cache = componentToCacheKeys.get(factory._type)
-      if (!cache) {
-        componentToCacheKeys.set(factory._type, new Set([cacheKey]))
-      }
-      else {
-        cache.add(cacheKey)
-      }
-    }
-
-    let data: Array<[Entity, ...{ [K in keyof TFactories]:
-      ComponentFactoryContent<TFactories[K]> }]>
-
-    // Query cached
-    if (this.queryCache.has(cacheKey)) {
-      data = this.queryCache.get(cacheKey) as Array<
-        [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
-      >
-    }
+    let data = this.queryCache.get(cacheKey) as
+      | Array<
+          [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
+        >
+      | undefined
 
     // Query not cached
-    else {
+    if (!data) {
       // 1) Get the entities (ids) that have all queried factories
       const entities = this.getEntities(factories)
 
       // 2) Get the queried components from their factories
       const l = entities.length
-      data = Array.from({ length: l })
+      data = []
       for (let i = 0; i < l; ++i) {
         const e = entities[i]
-        data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)]
+        data[i] = [e, ...this.getComponentsArrUnsafe(e, factories)] as [
+          Entity,
+          ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> },
+        ]
+      }
+
+      // Update reverse mapping only when a cache entry is created
+      const componentToCacheKeys = this.componentToCacheKeys
+      for (let i = 0; i < factories.length; i++) {
+        const factory = factories[i]
+        const cache = componentToCacheKeys.get(factory._cmpId)
+        if (!cache) {
+          componentToCacheKeys.set(factory._cmpId, new Set([cacheKey]))
+        } else {
+          cache.add(cacheKey)
+        }
       }
 
       this.queryCache.set(cacheKey, data)
     }
 
     if (this.deactivated.size === 0) {
-      return data.slice()
+      return data
     }
 
-    return data.filter(o => !this.deactivated.has(o[0]))
+    const filtered: Array<
+      [Entity, ...{ [K in keyof TFactories]: ComponentFactoryContent<TFactories[K]> }]
+    > = []
+    for (let i = 0; i < data.length; i++) {
+      const entry = data[i]
+      if (!this.deactivated.has(entry[0])) {
+        filtered.push(entry)
+      }
+    }
+
+    return filtered
   }
 
   /**
@@ -290,36 +314,49 @@ export class World {
    * @returns
    */
   public getEntities<T extends ReadonlyArray<ComponentFactory>>(factories: T): Entity[] {
-    if (factories.length === 0) {
+    const l = factories.length
+    if (l === 0) {
       return []
     }
 
-    const maps = new Array<Map<Entity, ComponentData>>(factories.length)
+    const maps = [] as Map<Entity, ComponentData>[]
     let smallestMap: Map<Entity, ComponentData> | null = null
 
-    for (let i = 0; i < factories.length; ++i) {
-      const componentDataByType = this.data.get(factories[i]._type)
+    for (let i = 0; i < l; ++i) {
+      const componentDataByType = this.data.get(factories[i]._cmpId)
       if (!componentDataByType) {
         return []
       }
+
       maps[i] = componentDataByType
       if (!smallestMap || componentDataByType.size < smallestMap.size) {
         smallestMap = componentDataByType
       }
     }
 
-    const entitiesIds: Entity[] = []
-    if (!smallestMap) {
-      return entitiesIds
+    if (!smallestMap || smallestMap.size === 0) {
+      return []
     }
 
-    outer: for (const entity of smallestMap.keys()) {
-      for (let i = 0; i < maps.length; ++i) {
-        if (!maps[i].has(entity)) {
-          continue outer
+    const entitiesIds: number[] = []
+    for (const entity of smallestMap.keys()) {
+      let hasAllComponents = true
+
+      for (let i = 0; i < l; ++i) {
+        const componentMap = maps[i]
+        if (componentMap === smallestMap) {
+          continue
+        }
+
+        if (!componentMap.has(entity)) {
+          hasAllComponents = false
+          break
         }
       }
-      entitiesIds.push(entity)
+
+      if (hasAllComponents) {
+        entitiesIds.push(entity)
+      }
     }
 
     return entitiesIds
@@ -330,71 +367,115 @@ export class World {
     const componentToCacheKeys = this.componentToCacheKeys
     for (let i = 0; i < factories.length; i++) {
       const cmpId = factories[i]
-      const cacheKeys = componentToCacheKeys.get(cmpId)
-      if (!cacheKeys) {
-        continue
+      if (componentToCacheKeys.has(cmpId)) {
+        const cacheKeys = componentToCacheKeys.get(cmpId)!
+        for (const key of cacheKeys) {
+          queryCache.delete(key)
+        }
+        componentToCacheKeys.delete(cmpId)
       }
-      for (const key of cacheKeys) {
-        queryCache.delete(key)
-      }
-      componentToCacheKeys.delete(cmpId)
     }
   }
 
   private getComponentsArrUnsafe<T extends ReadonlyArray<ComponentFactory>>(
     entity: Entity,
     factories: T
-  ): { [K in keyof T]: ComponentFactoryContent<T[K]> } {
+  ): { [K in keyof T]: ComponentData<ComponentFactoryContent<T[K]>> } {
     const l = factories.length
-    const cmps = Array.from({ length: l }) as unknown[]
+    const cmps = [] as ComponentData[]
     const data = this.data
     for (let i = 0; i < l; ++i) {
-      cmps[i] = data.get(factories[i]._type)!.get(entity)!
+      cmps[i] = data.get(factories[i]._cmpId)!.get(entity)!
     }
-    return cmps as { [K in keyof T]: ComponentFactoryContent<T[K]> }
+    return cmps as any
   }
 }
 
 // #region Utils
 
-interface Mergeable {
+interface Dict {
   [key: string]: any
 }
 
-function isObject(item: unknown): item is object & Mergeable {
-  return !!item && typeof item === 'object' && !Array.isArray(item)
+function isLuaRuntime(): boolean {
+  return typeof (globalThis as { type?: unknown }).type === 'function'
 }
 
-export function mergeDeep(target: Mergeable, ...sources: (Mergeable | undefined)[]) {
-  if (!sources.length) return target
-  const source = sources.shift()
+function getRuntimeType(value: unknown): string {
+  return typeof value
+}
 
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        if (isObject(source[key])) {
-          if (!target[key]) {
-            Object.assign(target, { [key]: {} })
-          }
-          else {
-            target[key] = Object.assign({}, target[key])
-          }
-          mergeDeep(target[key], source[key])
+function isTable(item: unknown): item is object & Dict {
+  if (item === null) {
+    return false
+  }
+
+  const itemType = getRuntimeType(item)
+  return itemType === 'object'
+}
+
+function isArrayLikeTable(item: unknown): item is unknown[] {
+  if (!isLuaRuntime() && Array.isArray(item)) {
+    return true
+  }
+
+  if (!isTable(item)) {
+    return false
+  }
+
+  let hasAnyKey = false
+  for (const key in item) {
+    hasAnyKey = true
+    const numericKey = Number(key as unknown)
+    if (Number.isNaN(numericKey) || numericKey !== (key as unknown as number)) {
+      return false
+    }
+  }
+
+  if (!hasAnyKey) {
+    return false
+  }
+
+  return hasAnyKey
+}
+
+function isObject(item: unknown): item is object & Dict {
+  return isTable(item) && !isArrayLikeTable(item)
+}
+
+export function mergeDeep(target: Dict, ...sources: Dict[]) {
+  const targetIsObject = isObject(target)
+  const targetIsArrayLike = isArrayLikeTable(target)
+
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i]
+    if (!source) {
+      continue
+    }
+
+    if (targetIsObject && isObject(source)) {
+      for (const key in source) {
+        const sourceValue = source[key]
+
+        if (isObject(sourceValue)) {
+          const targetValue = target[key]
+          const nextTarget = isObject(targetValue) ? targetValue : {}
+          target[key] = nextTarget
+          mergeDeep(nextTarget, sourceValue)
+        } else if (isArrayLikeTable(sourceValue)) {
+          target[key] = [...sourceValue]
+        } else {
+          target[key] = sourceValue
         }
-        else if (Array.isArray(source[key])) {
-          target[key] = [...source[key]]
-        }
-        else {
-          target[key] = source[key]
-        }
+      }
+    } else if (targetIsArrayLike && isArrayLikeTable(source)) {
+      for (let j = 0; j < source.length; j++) {
+        target.push(source[j])
       }
     }
   }
-  else if (Array.isArray(target) && Array.isArray(source)) {
-    target.push(...source)
-  }
 
-  return mergeDeep(target, ...sources)
+  return target
 }
 
 // #endregion Utils

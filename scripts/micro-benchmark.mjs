@@ -1,5 +1,5 @@
-import { performance } from 'node:perf_hooks'
 import { createRequire } from 'node:module'
+import { performance } from 'node:perf_hooks'
 
 const require = createRequire(import.meta.url)
 
@@ -37,11 +37,11 @@ function benchmark(label, fn, iterations, warmup = 10) {
 
 function buildWorld(entityCount = 12000) {
   const world = new World()
-  const Position = Component({ x: 0, y: 0 })
-  const Velocity = Component({ dx: 0, dy: 0 })
-  const Health = Component({ hp: 100 })
-  const Team = Component({ id: 0 })
-  const Tag = Component()
+  const Position = Component('Position', { x: 0, y: 0 })
+  const Velocity = Component('Velocity', { dx: 0, dy: 0 })
+  const Health = Component('Health', { hp: 100 })
+  const Team = Component('Team', { id: 0 })
+  const Tag = Component('Tag', {})
 
   const rng = makeRng(42)
   const entities = new Array(entityCount)
@@ -50,8 +50,8 @@ function buildWorld(entityCount = 12000) {
     if (rng() < 0.75) components.push(Velocity({ dx: 1, dy: 1 }))
     if (rng() < 0.65) components.push(Health({ hp: 80 + (i % 20) }))
     if (rng() < 0.55) components.push(Team({ id: i % 4 }))
-    if (rng() < 0.50) components.push(Tag())
-    entities[i] = world.spawn(...components)
+    if (rng() < 0.5) components.push(Tag())
+    entities[i] = world.spawn(components)
   }
 
   return { world, Position, Velocity, Health, Team, Tag, entities }
@@ -64,46 +64,63 @@ const queryFactories = [Position, Velocity, Health, Team]
 
 const baselineQuery = world.query(queryFactories)
 if (baselineQuery.length === 0) {
-  throw new Error('Dataset invalide: la query de référence ne retourne aucune entité.')
+  throw new Error(
+    'Dataset invalide: la query de référence ne retourne aucune entité.'
+  )
 }
 
-const queryHot = benchmark('query hot-cache (ms)', () => {
-  world.query(queryFactories)
-}, 250)
+const queryHot = benchmark(
+  'query hot-cache (ms)',
+  () => {
+    world.query(queryFactories)
+  },
+  250
+)
 
 let rotatingEntityIndex = 0
-const setAndQuery = benchmark('setComponents + query (ms)', () => {
-  const entity = entities[rotatingEntityIndex]
-  rotatingEntityIndex = (rotatingEntityIndex + 1) % entities.length
-  world.setComponents(entity, Position({ x: rotatingEntityIndex, y: rotatingEntityIndex + 1 }))
-  world.query(queryFactories)
-}, 200)
+const setAndQuery = benchmark(
+  'setComponents + query (ms)',
+  () => {
+    const entity = entities[rotatingEntityIndex]
+    rotatingEntityIndex = (rotatingEntityIndex + 1) % entities.length
+    world.setComponents(
+      entity,
+      Position({ x: rotatingEntityIndex, y: rotatingEntityIndex + 1 })
+    )
+    world.query(queryFactories)
+  },
+  200
+)
 
-const queryCount = benchmark('query count only (ops/s)', () => {
-  const rows = world.query(queryFactories)
-  if (rows.length < 0) throw new Error('Impossible')
-}, 250)
+const queryCount = benchmark(
+  'query count only (ops/s)',
+  () => {
+    const rows = world.query(queryFactories)
+    if (rows.length < 0) throw new Error('Impossible')
+  },
+  250
+)
 
 console.table([
   {
     metric: queryHot.metric,
     avgMs: queryHot.avgMs.toFixed(3),
     totalMs: queryHot.totalMs.toFixed(1),
-    opsPerSec: queryHot.opsPerSec.toFixed(0),
+    opsPerSec: Math.round(queryHot.opsPerSec).toLocaleString(),
     note: `${baselineQuery.length} entities matched`,
   },
   {
     metric: setAndQuery.metric,
     avgMs: setAndQuery.avgMs.toFixed(3),
     totalMs: setAndQuery.totalMs.toFixed(1),
-    opsPerSec: setAndQuery.opsPerSec.toFixed(0),
+    opsPerSec: Math.round(setAndQuery.opsPerSec).toLocaleString(),
     note: 'cache invalidation path',
   },
   {
     metric: queryCount.metric,
     avgMs: queryCount.avgMs.toFixed(3),
     totalMs: queryCount.totalMs.toFixed(1),
-    opsPerSec: queryCount.opsPerSec.toFixed(0),
+    opsPerSec: Math.round(queryCount.opsPerSec).toLocaleString(),
     note: 'read throughput',
   },
 ])
