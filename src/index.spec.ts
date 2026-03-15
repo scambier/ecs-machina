@@ -3,7 +3,6 @@ import {
   Component,
   ComponentFactory,
   Entity,
-  intersection,
   mergeDeep,
   World,
 } from './index'
@@ -203,14 +202,6 @@ describe('The cache system', () => {
     world.query([Position])
     const [e] = world.query([Position])[0]
     expect(e).toEqual(entityA)
-  })
-})
-
-describe('intersection', () => {
-  it('works', () => {
-    expect(intersection([1, 2, 3], [3, 4, 5])).toEqual([3])
-    expect(intersection([1, 2, 3], [1, 2, 3])).toEqual([1, 2, 3])
-    expect(intersection([1, 2, 3, 4], [0, 2, 3, 5])).toEqual([2, 3])
   })
 })
 
